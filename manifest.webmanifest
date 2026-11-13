@@ -1,0 +1,38 @@
+{
+  "name": "Controle de Carregamento - Faturamento | Oranges",
+  "short_name": "Oranges Cargas",
+  "description": "Acompanhamento de carregamentos da Oranges Alimentos",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1D0A19",
+  "theme_color": "#49103D",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app-icon.png",
+      "sizes": "130x130",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Painel de carregamentos",
+      "url": "/",
+      "description": "Acompanhar os veículos"
+    },
+    {
+      "name": "Administração",
+      "url": "/login",
+      "description": "Atualizar carregamentos"
+    }
+  ]
+}
