@@ -13,4 +13,5 @@ app.get('/manifest.webmanifest',(req,res)=>res.type('application/manifest+json')
 app.get('/app-icon.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(__dirname,'app-icon.svg')));
 app.get('/app-icon.png',(req,res)=>{const html=require('fs').readFileSync(path.join(__dirname,'admin.html'),'utf8');const m=html.match(/<link rel="icon" type="image\/png" href="data:image\/png;base64,([A-Za-z0-9+/=]+)"/);if(!m)return res.status(404).end();res.type('png').send(Buffer.from(m[1],'base64'))});
 app.get('/sw.js',(req,res)=>res.type('application/javascript').set('Service-Worker-Allowed','/').sendFile(path.join(__dirname,'sw.js')));
+app.get('/productivity.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'productivity.js')));
 app.get('/login',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));app.get('/admin',aut,(req,res)=>res.sendFile(path.join(__dirname,'admin.html')));app.get('/',(req,res)=>res.sendFile(path.join(__dirname,'public.html')));app.get('*',(req,res)=>res.redirect('/'));const port=process.env.PORT||3000;app.listen(port,'0.0.0.0',()=>console.log('Oranges pronto na porta '+port));
