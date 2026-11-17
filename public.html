@@ -440,8 +440,55 @@ body header .brand-partners{gap:0!important}
 #readingView .rv-load.rv-s3{border-left:5px solid #F97316!important}
 #readingView .rv-kpi-4::before{background:#F97316!important}
 #readingView .rv-kpi-4{border-top:2px solid #F97316!important}
-</style></head>
-<body><header><div class="brand-partners" aria-label="Marca Oranges Alimentos"><div class="brand-vector-lockup"><img src="/oranges-symbol.svg" alt="" width="44" height="48"><div class="brand-vector-type"><strong>ORANGES</strong><small>alimentos</small></div></div></div><div><h1>CONTROLE DE CARREGAMENTO - FATURAMENTO</h1><small>Oranges Alimentos · Acompanhamento dos carregamentos</small></div></header><main>
+</style><style id="oranges-theme-control-style">
+body header{position:relative}
+.oranges-theme-toggle{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;padding:10px 13px!important;border:1px solid #b68da7!important;border-radius:10px!important;background:#fff5ef!important;color:#49103d!important;font:700 12px Inter,system-ui,Arial,sans-serif!important;cursor:pointer!important;box-shadow:none!important;flex:0 0 auto}
+.oranges-theme-toggle svg{height:17px;width:17px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.oranges-theme-toggle:hover{filter:brightness(.96)}
+.oranges-theme-toggle:focus-visible{outline:3px solid #f9b757;outline-offset:3px}
+html[data-oranges-theme="light"] .oranges-theme-toggle{background:#49103d!important;color:#fff!important;border-color:#49103d!important}
+html[data-oranges-theme="light"] body header{background:#fff!important;border-color:#e1e5ed!important}
+html[data-oranges-theme="light"] body{background:#f6f8fb!important;color:#293345!important}
+html[data-oranges-theme="light"] body header h1,html[data-oranges-theme="light"] body header strong,html[data-oranges-theme="light"] body header .brand-vector-type>strong{color:#49103d!important}
+html[data-oranges-theme="light"] body header small{color:#647085!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-panel,html[data-oranges-theme="light"] #readingView .rv-prod-kpi{background:#fff!important;color:#293345!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-kpi strong,html[data-oranges-theme="light"] #readingView .rv-prod-panel h3,html[data-oranges-theme="light"] #readingView .rv-prod-duration strong{color:#49103d!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-row,html[data-oranges-theme="light"] #readingView .rv-prod-duration span,html[data-oranges-theme="light"] #readingView .rv-prod-duration small{color:#647084!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-table td{background:#fff!important;color:#273247!important;border-color:#e2e7ed!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-table th{background:#f8edf4!important;color:#49103d!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-track{background:#e8edf3!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-period{color:#526177!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-empty{background:#fff!important;color:#68778b!important;border-color:#dce2eb!important}
+@media(max-width:750px){.oranges-theme-toggle{padding:9px!important;gap:5px;font-size:11px!important}.oranges-theme-toggle .theme-toggle-label{display:none}body header{flex-wrap:wrap!important}}
+</style><script id="oranges-theme-control-script">
+(function(){
+'use strict';
+var key='oranges_visual_theme_v1',selected='dark';
+try{selected=localStorage.getItem(key)==='light'?'light':'dark'}catch(err){}
+var root=document.documentElement,themeSheet=document.getElementById('oranges-wine-final');
+function applyTheme(value){
+ selected=value==='light'?'light':'dark';
+ root.setAttribute('data-oranges-theme',selected);
+ root.style.colorScheme=selected==='light'?'light':'dark';
+ if(themeSheet){themeSheet.disabled=selected==='light';if(themeSheet.sheet)themeSheet.sheet.disabled=selected==='light'}
+ var toggle=document.getElementById('orangesThemeToggle');
+ if(toggle){
+  var light=selected==='light';
+  toggle.setAttribute('aria-label',light?'Ativar modo escuro':'Ativar modo claro');
+  toggle.setAttribute('title',light?'Ativar modo escuro':'Ativar modo claro');
+  toggle.setAttribute('aria-pressed',String(light));
+  toggle.innerHTML=(light?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13.5A9 9 0 0 1 10.5 3.5 9 9 0 1 0 20.5 13.5Z"/></svg><span class="theme-toggle-label">Modo escuro</span>':'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><span class="theme-toggle-label">Modo claro</span>');
+ }
+}
+applyTheme(selected);
+document.addEventListener('DOMContentLoaded',function(){
+ var toggle=document.getElementById('orangesThemeToggle');
+ if(toggle){toggle.addEventListener('click',function(){applyTheme(selected==='light'?'dark':'light');try{localStorage.setItem(key,selected)}catch(err){}})}
+ applyTheme(selected);
+});
+})();
+</script></head>
+<body><header><div class="brand-partners" aria-label="Marca Oranges Alimentos"><div class="brand-vector-lockup"><img src="/oranges-symbol.svg" alt="" width="44" height="48"><div class="brand-vector-type"><strong>ORANGES</strong><small>alimentos</small></div></div></div><div><h1>CONTROLE DE CARREGAMENTO - FATURAMENTO</h1><small>Oranges Alimentos · Acompanhamento dos carregamentos</small></div><button type="button" id="orangesThemeToggle" class="oranges-theme-toggle" aria-label="Ativar modo claro" title="Ativar modo claro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg><span class="theme-toggle-label">Modo claro</span></button></header><main>
 <section id="readingView" class="rv-view" aria-label="Painel de leitura Oranges"><nav class="rv-primary-nav" aria-label="Navegação do painel de leitura"><button type="button" class="active" data-rv-tab="dashboard" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Visão operacional</button><button type="button" data-rv-tab="tickets" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4zM12 7v10"/></svg>Consultar tickets AIS</button><button type="button" data-rv-tab="produtividade" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V9M10 20V4M16 20v-7M22 20V7"/></svg>Produtividade</button></nav>
 <div id="rvDashboardTab">
 <div class="rv-top"><div><span class="rv-eyebrow">ORANGES ALIMENTOS · CENTRAL OPERACIONAL</span><h2>Diagnóstico de Carregamentos</h2><p>Acompanhamento operacional e consulta de tickets AIS em tempo real</p></div><div class="rv-live-block"><span id="readingLive" class="rv-live">● Conectando</span><span id="readingStamp">Sincronizando…</span><span class="rv-readonly">◉ Somente leitura</span></div></div>
