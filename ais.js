@@ -1,5 +1,5 @@
 'use strict';
-const crypto=require('crypto'), pdf=require('pdf-parse'),pg=require('pg');
+const crypto=require('crypto'),pdfjs=require('pdfjs-dist/legacy/build/pdf.js'),pg=require('pg');
 const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,ssl:process.env.DATABASE_URL?.includes('localhost')?false:{rejectUnauthorized:false}});
 const ready=pool.query("CREATE TABLE IF NOT EXISTS ais_tickets (id BIGSERIAL PRIMARY KEY,digest TEXT UNIQUE NOT NULL,filename TEXT NOT NULL,ticket_number TEXT,plate TEXT,load_number TEXT,gross_kg NUMERIC,tare_kg NUMERIC,net_kg NUMERIC,linked_plate TEXT,linked_load TEXT,match_status TEXT NOT NULL DEFAULT 'review',review_reason TEXT,imported_at TIMESTAMPTZ DEFAULT NOW())");
 const plate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -20,14 +20,32 @@ module.exports=function(app,adminAuth){
  const buf=Buffer.from(enc,'base64');if(buf.length>8388608||buf.subarray(0,5).toString()!=='%PDF-')return res.status(400).json({error:'PDF inválido ou maior que 8 MB'});
  const digest=crypto.createHash('sha256').update(buf).digest('hex');
  try{await ready;let old=await pool.query('SELECT id,match_status,review_reason FROM ais_tickets WHERE digest=$1',[digest]);if(old.rows.length)return res.json({ok:true,duplicate:true,id:old.rows[0].id,status:old.rows[0].match_status,reason:old.rows[0].review_reason});
- const parsed=parse((await pdf(buf,{max:8})).text);
+ let extracted='';
+ try{
+   const loading=pdfjs.getDocument({data:new Uint8Array(buf),useSystemFonts:true,disableFontFace:true,isEvalSupported:false,stopAtErrors:false});
+   const document=await loading.promise;
+   try{
+     const count=Math.min(document.numPages,12);
+     for(let page=1;page<=count;page++){
+       const p=await document.getPage(page);
+       const content=await p.getTextContent({disableCombineTextItems:false});
+       extracted+=' '+content.items.map(item=>item.str||'').join(' ');
+       p.cleanup();
+     }
+   }finally{await document.destroy()}
+ }catch(error){
+   console.error('AIS PDF parsing failed',filename,error.message);
+   return res.status(422).json({error:'Não foi possível extrair texto deste PDF. Se ele for uma imagem digitalizada, envie um exemplo para configurar leitura OCR.',code:'PDF_READ_ERROR'});
+ }
+ if(!extracted.trim())return res.status(422).json({error:'Este PDF não contém texto selecionável. É necessário OCR para este formato.',code:'PDF_NO_TEXT'});
+ const parsed=parse(extracted);
  let match=[];if(parsed.plate)match=(await cargos()).filter(c=>plate(c.placa)===parsed.plate&&(!parsed.load_number||load(c.carga)===parsed.load_number));
  let status=parsed.ticket_number&&parsed.plates.length===1&&match.length===1?'linked':'review';
  let reason=status==='linked'?null:!parsed.ticket_number?'Número do ticket não identificado':parsed.plates.length!==1?'Placa ausente ou ambígua':match.length===0?'Carga não encontrada':'Mais de uma carga com a placa';
  let selected=status==='linked'?match[0]:null;
  let q=await pool.query('INSERT INTO ais_tickets(digest,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id',[digest,filename,parsed.ticket_number,parsed.plate,parsed.load_number,parsed.gross_kg,parsed.tare_kg,parsed.net_kg,selected?plate(selected.placa):null,selected?load(selected.carga):null,status,reason]);
  res.json({ok:true,id:q.rows[0].id,status,reason,ticket:parsed.ticket_number,plate:parsed.plate});
- }catch(e){console.error('AIS PDF error',e.message);res.status(422).json({error:'Falha ao interpretar PDF. Verifique se o texto é selecionável'})}
+ }catch(e){console.error('AIS PDF error',e.message);res.status(503).json({error:'Erro interno no processamento do ticket. Consulte o painel de logs.',code:'AIS_PROCESSING_ERROR'})}
  });
  app.get('/api/ais/tickets',adminAuth,async(req,res)=>{try{await ready;const q=await pool.query('SELECT id,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason,imported_at FROM ais_tickets ORDER BY imported_at DESC LIMIT 500');res.json({tickets:q.rows})}catch(e){res.status(503).json({error:'Tickets indisponíveis'})}});
  app.get('/api/ais/summary',async(req,res)=>{try{await ready;const q=await pool.query("SELECT linked_plate,linked_load,ticket_number FROM ais_tickets WHERE match_status='linked' ORDER BY imported_at DESC LIMIT 2000");res.json({tickets:q.rows})}catch(e){res.status(503).json({error:'Tickets indisponíveis'})}});
