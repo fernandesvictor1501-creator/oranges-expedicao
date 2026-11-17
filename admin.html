@@ -550,6 +550,32 @@ html[data-oranges-theme="light"] .admin-mobile-nav button{color:#785266!importan
 html[data-oranges-theme="light"] .admin-mobile-nav button.active{background:#f3e5eb!important;color:#49103d!important}
 html[data-oranges-theme="light"] main>section .pill.s3,html[data-oranges-theme="light"] #lista .pill.s3{background:#f97316!important;color:#fff!important}
 @media(max-width:720px){html[data-oranges-theme="light"] body main{padding:12px 10px 95px!important}html[data-oranges-theme="light"] .oranges-admin-reference-hero{padding:20px 18px!important}html[data-oranges-theme="light"] .oranges-admin-reference-hero:after{width:65px;height:75px;right:12px;opacity:.25}}
+</style><style id="oranges-approved-icons-v1">
+
+.oranges-icon-tile{display:grid!important;place-items:center!important;width:43px!important;height:43px!important;min-width:43px!important;min-height:43px!important;flex:0 0 43px!important;line-height:1!important;border:0!important;border-radius:12px!important;box-shadow:none!important;overflow:hidden!important;padding:7px!important;box-sizing:border-box!important}
+.oranges-icon-tile svg{display:block!important;width:27px!important;height:27px!important;stroke:currentColor!important;fill:none!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;overflow:visible!important}
+.oranges-icon-0{background:#f7e7ef!important;color:#965074!important}
+.oranges-icon-1{background:#f3edf3!important;color:#886984!important}
+.oranges-icon-2{background:#eeeeff!important;color:#5d52a1!important}
+.oranges-icon-3{background:#f7e9fb!important;color:#892ca0!important}
+.oranges-icon-4{background:#fff0e5!important;color:#ed6516!important}
+.oranges-icon-5{background:#f6efee!important;color:#916e7e!important}
+.oranges-icon-6{background:#e6f5ec!important;color:#21845a!important}
+html[data-oranges-theme="dark"] .oranges-icon-0{background:#6e2b54!important;color:#f3b5d4!important}
+html[data-oranges-theme="dark"] .oranges-icon-1{background:#64425c!important;color:#f1cfe4!important}
+html[data-oranges-theme="dark"] .oranges-icon-2{background:#383e79!important;color:#d6d0ff!important}
+html[data-oranges-theme="dark"] .oranges-icon-3{background:#663079!important;color:#f5c4ff!important}
+html[data-oranges-theme="dark"] .oranges-icon-4{background:#833d1f!important;color:#ffd6b6!important}
+html[data-oranges-theme="dark"] .oranges-icon-5{background:#684350!important;color:#f4cedc!important}
+html[data-oranges-theme="dark"] .oranges-icon-6{background:#195941!important;color:#c7ffe1!important}
+
+#painel .cards .oranges-kpi-card{min-height:120px!important;position:relative!important;padding:16px!important}
+#painel .cards .oranges-card-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:8px!important}
+#painel .cards .oranges-card-head .label{flex:1!important;line-height:1.3!important;text-align:left!important;letter-spacing:0!important;font-size:11px!important}
+#painel .cards .oranges-card-head>.oranges-icon-tile{margin-left:auto!important}
+#painel .cards .oranges-kpi-card .number{margin-top:5px!important;text-align:left!important}
+#painel .mac-status svg{display:inline-block!important;width:15px!important;height:15px!important;vertical-align:middle!important;stroke:#fff!important;fill:none!important;stroke-width:1.8!important;stroke-linejoin:round!important;stroke-linecap:round!important;margin-right:5px!important}
+@media(max-width:850px){#painel .cards .oranges-kpi-card{min-height:111px!important;padding:12px 10px!important}#painel .cards .oranges-card-head>.oranges-icon-tile{width:35px!important;height:35px!important;min-width:35px!important;min-height:35px!important;flex-basis:35px!important}#painel .cards .oranges-card-head>.oranges-icon-tile svg{width:23px!important;height:23px!important}}
 </style></head><body><header><div class="brand-partners" aria-label="Marca Oranges Alimentos"><div class="brand-vector-lockup"><img src="/oranges-symbol.svg" alt="" width="44" height="48"><div class="brand-vector-type"><strong>ORANGES</strong><small>alimentos</small></div></div></div><div><strong>CONTROLE DE CARREGAMENTO - FATURAMENTO</strong><small>ORANGES ALIMENTOS · Acompanhamento de carregamentos</small></div><button type="button" id="orangesThemeToggle" class="oranges-theme-toggle" aria-label="Ativar modo claro" title="Ativar modo claro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg><span class="theme-toggle-label">Modo claro</span></button></header><main><nav><button data-tab="importar" class="active">Importação</button><button data-tab="painel">Painel</button><button data-tab="produtividade">Produtividade</button><button data-tab="ticketsAis">Tickets AIS</button><button data-tab="limparTicketsAis">Limpar Tickets AIS</button><button data-tab="cadastro">Nova carga</button><button data-tab="historico">Histórico</button><button data-tab="config">Dados e backup</button><button data-tab="limpeza">Limpar programação</button></nav><div class="oranges-admin-reference-hero" aria-label="Central administrativa Oranges"><div><span class="admin-hero-overline">ORANGES ALIMENTOS · EXPEDIÇÃO E FATURAMENTO</span><h2>Central operacional</h2><p>Gestão de carregamentos, importações, documentação e indicadores em um só lugar.</p><span class="admin-hero-tag">Controle administrativo</span></div></div>
 <section id="painel" class="hidden"><h1>Painel operacional</h1><p class="muted">Acompanhe cada caminhão da chegada até a liberação.</p><div id="cards" class="cards"></div><div class="panel"><h2>Carregamentos</h2><div class="toolbar"><input id="busca" type="search" placeholder="Buscar placa, carga, pedido, cliente..."><select id="filtro"><option value="">Todos os status</option></select><button class="secondary" id="importarPainel">Importar arquivos</button><button class="warn" id="limparPainelNovo" type="button" title="Limpar cargas atuais e iniciar nova programação">Limpar painel / Nova programação</button></div><div id="lista" class="tablewrap"></div><div id="mobileAdminLoads" class="mobile-admin-loads" aria-live="polite"></div></div></section>
 <section id="produtividade" class="hidden">
