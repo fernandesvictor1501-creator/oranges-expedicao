@@ -24,6 +24,23 @@ app.use((req,res,next)=>{res.set('Cache-Control','no-store');next()});
 const aut=(req,res,next)=>{if(req.session?.admin)return next();return res.status(401).json({error:'Não autorizado'})};const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 app.post('/api/login',(req,res)=>{const u=String(req.body?.username||'');const p=String(req.body?.password||'');const expected=process.env.ADMIN_PASSWORD||'';if(!expected)return res.status(503).json({error:'Administrador não configurado'});const ok=u===(process.env.ADMIN_USER||'victor.fernandes')&&crypto.timingSafeEqual(crypto.createHash('sha256').update(p).digest(),crypto.createHash('sha256').update(expected).digest());if(!ok)return res.status(401).json({error:'Credenciais inválidas'});req.session.regenerate(err=>{if(err)return res.status(500).json({error:'Erro de sessão'});req.session.admin=true;res.json({ok:true})})});
 app.get('/api/public',async(req,res)=>{try{await ready;const q=await pool.query('SELECT dados FROM app_state WHERE id=1');const d=q.rows[0].dados;res.json({cargas:(d.cargas||[]).map(c=>({placa:c.placa,carga:c.carga,pedido:c.pedido,cliente:c.cliente,produto:c.produto,quantidade:c.quantidade,transportadora:c.transportadora,motorista:c.motorista,cidade:c.cidade,frete:c.frete,status:c.status,atualizado:c.atualizado}))})}catch(e){console.error(e);res.status(503).json({error:'Banco indisponível'})}});
+// Histórico público limitado ao cálculo de duração das etapas. Dados de usuários e observações não são divulgados.
+app.get('/api/public/productivity',async(req,res)=>{
+ try{
+  await ready;
+  const q=await pool.query('SELECT dados FROM app_state WHERE id=1');
+  const d=q.rows[0].dados||{};
+  const loads=(Array.isArray(d.cargas)?d.cargas:[]).map(c=>({
+   placa:String(c.placa||''),carga:String(c.carga||''),cliente:String(c.cliente||''),
+   status:Number(c.status)||0,dataProgramacao:String(c.dataProgramacao||'')
+  }));
+  const allowed=new Set(loads.map(c=>c.placa.toUpperCase().replace(/[^A-Z0-9]/g,'')+'|'+c.carga.trim()));
+  const historico=(Array.isArray(d.historico)?d.historico:[]).filter(h=>allowed.has(String(h.placa||'').toUpperCase().replace(/[^A-Z0-9]/g,'')+'|'+String(h.carga||'').trim())).slice(-6000).map(h=>({
+   placa:String(h.placa||''),carga:String(h.carga||''),depois:String(h.depois||''),data:String(h.data||'')
+  }));
+  res.set('Cache-Control','no-store').json({cargas:loads,historico});
+ }catch(e){console.error('Public productivity',e.message);res.status(503).json({error:'Indicadores indisponíveis'})}
+});
 app.get('/api/state',aut,async(req,res)=>{try{await ready;const q=await pool.query('SELECT dados FROM app_state WHERE id=1');res.json(q.rows[0].dados)}catch(e){console.error(e);res.status(503).json({error:'Banco indisponível'})}});
 app.put('/api/state',aut,async(req,res)=>{const d=upgradeFlow(req.body);if(!d||!Array.isArray(d.cargas)||!Array.isArray(d.historico)||!Array.isArray(d.tickets))return res.status(400).json({error:'Formato inválido'});try{await ready;await pool.query('UPDATE app_state SET dados=$1::jsonb WHERE id=1',[JSON.stringify(d)]);res.json({ok:true})}catch(e){console.error(e);res.status(503).json({error:'Não foi possível salvar'})}});
 app.get('/health',async(req,res)=>{try{await ready;await pool.query('SELECT 1');res.json({ok:true})}catch(e){res.status(503).json({ok:false})}});
@@ -33,6 +50,7 @@ app.get('/oranges-symbol.svg',(req,res)=>res.type('image/svg+xml').sendFile(path
 app.get('/app-icon.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(__dirname,'app-icon.svg')));
 app.get('/app-icon.png',(req,res)=>{const html=require('fs').readFileSync(path.join(__dirname,'admin.html'),'utf8');const m=html.match(/<link rel="icon" type="image\/png" href="data:image\/png;base64,([A-Za-z0-9+/=]+)"/);if(!m)return res.status(404).end();res.type('png').send(Buffer.from(m[1],'base64'))});
 app.get('/sw.js',(req,res)=>res.type('application/javascript').set('Service-Worker-Allowed','/').sendFile(path.join(__dirname,'sw.js')));
+app.get('/public-productivity.js',(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'public-productivity.js')));
 app.get('/reading-ui.js',(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'reading-ui.js')));
 app.get('/productivity.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'productivity.js')));
 app.get('/ais-clean.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'ais-clean.js')));
