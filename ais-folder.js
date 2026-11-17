@@ -41,7 +41,7 @@
         ordered.push({file,key:file.name+'|'+file.size+'|'+file.lastModified});
       }
       ordered.sort((a,b)=>a.file.lastModified-b.file.lastModified);
-      let processed=0,newOnes=0;
+      let processed=0,newOnes=0,failed=[];
       for(const item of ordered){
         if(!active)break;
         if(done.has(item.key))continue;
@@ -51,9 +51,9 @@
           const result=await upload(item.file);
           done.add(item.key);processed++;
           if(!result.duplicate)newOnes++;
-        }catch(e){say('Erro em '+e.message,true);continue;}
+         }catch(e){failed.push(e.message);continue;}
       }
-      if(active){lastCheck=Date.now();say('Pasta conectada: '+handle.name+'. '+processed+' PDF(s) processado(s) agora; '+newOnes+' novo(s). Nova verificação automática a cada 15 segundos.');}
+      if(active){lastCheck=Date.now();say('Pasta: '+handle.name+'. '+processed+' PDF(s) recebido(s); '+newOnes+' novo(s); '+failed.length+' falha(s). '+(failed.length?'Primeira falha: '+failed[0]:'Nova verificação em até 15 segundos.'),failed.length>0);}
       if(processed&&typeof window.aisRefreshTickets==='function')window.aisRefreshTickets();
     }catch(e){
       active=false;say('Acesso à pasta interrompido: '+e.message+'. Selecione a pasta novamente.',true);
