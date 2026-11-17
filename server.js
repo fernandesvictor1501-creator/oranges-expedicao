@@ -28,6 +28,7 @@ app.get('/api/state',aut,async(req,res)=>{try{await ready;const q=await pool.que
 app.put('/api/state',aut,async(req,res)=>{const d=upgradeFlow(req.body);if(!d||!Array.isArray(d.cargas)||!Array.isArray(d.historico)||!Array.isArray(d.tickets))return res.status(400).json({error:'Formato inválido'});try{await ready;await pool.query('UPDATE app_state SET dados=$1::jsonb WHERE id=1',[JSON.stringify(d)]);res.json({ok:true})}catch(e){console.error(e);res.status(503).json({error:'Não foi possível salvar'})}});
 app.get('/health',async(req,res)=>{try{await ready;await pool.query('SELECT 1');res.json({ok:true})}catch(e){res.status(503).json({ok:false})}});
 app.get('/manifest.webmanifest',(req,res)=>res.type('application/manifest+json').sendFile(path.join(__dirname,'manifest.webmanifest')));
+app.get('/oranges-symbol.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(__dirname,'oranges-symbol.svg')));
 app.get('/app-icon.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(__dirname,'app-icon.svg')));
 app.get('/app-icon.png',(req,res)=>{const html=require('fs').readFileSync(path.join(__dirname,'admin.html'),'utf8');const m=html.match(/<link rel="icon" type="image\/png" href="data:image\/png;base64,([A-Za-z0-9+/=]+)"/);if(!m)return res.status(404).end();res.type('png').send(Buffer.from(m[1],'base64'))});
 app.get('/sw.js',(req,res)=>res.type('application/javascript').set('Service-Worker-Allowed','/').sendFile(path.join(__dirname,'sw.js')));
