@@ -39,6 +39,22 @@ function card(c){
  +'<div class="rv-load-fields">'+cell('CARGA',c.carga)+cell('PEDIDO',c.pedido)+cell('CLIENTE',c.cliente)+cell('PRODUTO',c.produto)+cell('QUANTIDADE',c.quantidade)+cell('TRANSPORTADORA',c.transportadora)+cell('MOTORISTA',c.motorista)+cell('CIDADE',c.cidade)+cell('FRETE',c.frete)+'</div>'
  +'<div class="rv-load-foot"><span class="rv-updated">◷ Atualizado: '+esc(c.atualizado||'—')+'</span><div class="rv-ticket-actions">'+link(ticket)+'</div></div></article>';
 }
+
+function drawTicketCentral(){
+ const input=$('rvTicketSearch');if(!input)return;
+ const q=normPlate(input.value);
+ const available=tickets.map(t=>({...t,truck:all().find(c=>normPlate(c.placa)===normPlate(t.linked_plate)&&String(c.carga||'')===String(t.linked_load||''))})).filter(t=>t.truck);
+ const filteredTickets=available.filter(t=>!q||[t.ticket_number,t.linked_plate,t.linked_load,t.truck?.cliente].some(v=>normPlate(v).includes(q)));
+ $('rvTicketCount').textContent=filteredTickets.length+' ticket(s) vinculado(s)';
+ $('rvTicketList').innerHTML=filteredTickets.length?filteredTickets.map(t=>'<article class="rv-ticket-card"><div class="rv-ticket-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4zM12 7v10" /></svg></div><div class="rv-ticket-description"><span>Ticket AIS</span><strong>'+esc(t.ticket_number||'Não identificado')+'</strong><small>Placa '+esc(t.linked_plate)+' · Carga '+esc(t.linked_load)+' · '+esc(t.truck?.cliente||'')+'</small></div><div class="rv-ticket-card-action">'+(t.file_available?'<a class="rv-ticket-link" href="/api/ais/file/'+Number(t.id)+'" target="_blank" rel="noopener noreferrer">↗ Abrir '+(t.file_type==='xml'?'XML':'PDF')+'</a>':'<span class="rv-ticket-unavailable">Documento original indisponível</span>')+'</div></article>').join(''):'<div class="rv-empty">Nenhum ticket vinculado corresponde à busca. Quando o arquivo original estiver disponível, o botão de consulta aparecerá aqui.</div>';
+}
+function openTab(name){
+ const ticketsTab=name==='tickets';
+ $('rvDashboardTab').hidden=ticketsTab;
+ $('rvTicketCentral').hidden=!ticketsTab;
+ document.querySelectorAll('[data-rv-tab]').forEach(btn=>{const selected=btn.dataset.rvTab===name;btn.classList.toggle('active',selected);btn.setAttribute('aria-selected',String(selected))});
+ if(ticketsTab)drawTicketCentral();
+}
 function stats(){
  const count=all().length;
  const byStatus=ST.map((_,i)=>all().filter(c=>Number(c.status)===i).length);
@@ -76,12 +92,14 @@ $('readingStatus').addEventListener('change',draw);
 $('readingSort').addEventListener('change',()=>{sort=$('readingSort').value;draw()});
 $('readingClear').addEventListener('click',()=>{$('readingSearch').value='';$('readingStatus').value='';draw()});
 $('readingRefresh').addEventListener('click',()=>carregar());
-$('readingTicketsNav').addEventListener('click',()=>{ $('readingStatus').value='';$('readingSearch').value='';draw();$('readingLoads').scrollIntoView({behavior:'smooth'})});
+$('readingTicketsNav').addEventListener('click',()=>{openTab('tickets');$('readingView').scrollIntoView({behavior:'smooth'})});
 document.querySelectorAll('[data-reading-mode]').forEach(btn=>btn.onclick=()=>{mode=btn.dataset.readingMode;draw()});
 const originalCarregar=carregar;
 carregar=async function(){await originalCarregar();if($('connection').classList.contains('ok'))lastSuccess=new Date();draw()};
-async function refreshTickets(){try{const r=await fetch('/api/ais/summary',{cache:'no-store'});if(r.ok){const json=await r.json();tickets=Array.isArray(json.tickets)?json.tickets:[];draw()}}catch(e){}}
+async function refreshTickets(){try{const r=await fetch('/api/ais/summary',{cache:'no-store'});if(r.ok){const json=await r.json();tickets=Array.isArray(json.tickets)?json.tickets:[];draw();drawTicketCentral()}}catch(e){}}
+document.querySelectorAll('[data-rv-tab]').forEach(b=>b.addEventListener('click',()=>openTab(b.dataset.rvTab)));
+$('rvTicketSearch').addEventListener('input',drawTicketCentral);
 refreshTickets();setInterval(()=>{if(!document.hidden)refreshTickets()},15000);
 if($('connection').classList.contains('ok'))lastSuccess=new Date();
-draw();
+openTab('dashboard');draw();
 })();
