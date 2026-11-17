@@ -4,13 +4,15 @@ const $=id=>document.getElementById(id);
 if(!$('readingView'))return;
 const ST=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado'];
 const icons=[
-'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h12v10H3zM15 10h3l3 3v4h-6"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
-'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h10v13H4zM14 11h5l2 3v4h-7M7 9h4M7 13h4"/><circle cx="8" cy="19" r="1"/><circle cx="18" cy="19" r="1"/></svg>',
-'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7zM15 3v5h4M10 13h6M10 17h4"/></svg>',
-'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h9l3 3v15H7zM16 3v4h3M10 12h6M10 16h6"/></svg>',
-'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
-'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/></svg>'
+'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="10" rx="1.8"/><path d="M15.5 9h3l3 3.5v4h-6M6 16.5v2m12-2v2"/><circle cx="7" cy="18.5" r="2"/><circle cx="18" cy="18.5" r="2"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h8l3 9v4H3zM5 9h5M14 13h5M19 9v9h3M14 18h8M14 9l2 4"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h8l4 4V21H6zM14 2.5v4h4"/><path d="M14.2 10c-.7-.7-3.9-.7-3.9 1.1 0 1.8 4.5.8 4.5 3 0 2.1-3.9 2.3-4.8 1.3M12 8.5v8.5"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h8l4 4V21H6zM14 2.5v4h4M9 11h6M9 15h6M9 18h4"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6.5V12l4 2.5"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m7.5 12 3 3 6-6"/></svg>'
 ];
+const plannedIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg>';
+const iconTile=(icon,status)=>'<span class="oranges-icon-tile oranges-icon-'+status+'" aria-hidden="true">'+icon+'</span>';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normPlate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 let tickets=[],mode='cards',sort='updated';
@@ -62,8 +64,8 @@ function stats(){
  const released=byStatus[5],progress=count?Math.round(released/count*100):0;
  const linked=all().filter(c=>Boolean(ticketFor(c))).length;
  const withFile=all().filter(c=>Boolean(ticketFor(c)?.file_available)).length;
- const items=[['▦','Programados',count],[icons[0],'Aguardando chegada',byStatus[0]],[icons[1],'Carregando',byStatus[1]],[icons[2],'Finalizado / Faturando',byStatus[2]],[icons[3],'Aguardando documentação',byStatus[3]],[icons[4],'Aguardando liberação',byStatus[4]],[icons[5],'Liberado',released]];
- $('readingStats').innerHTML=items.map(([icon,title,value],i)=>'<div class="rv-kpi rv-kpi-'+i+'"><div class="rv-kpi-title"><span aria-hidden="true">'+icon+'</span><b>'+title+'</b></div><strong>'+value+'</strong><span class="rv-kpi-note">'+(i===6?'Concluídos da programação':'Programação atual')+'</span></div>').join('');
+ const items=[[plannedIcon,'Programados',count],...[0,1,2,3,4,5].map(i=>[icons[i],ST[i],byStatus[i]])];
+ $('readingStats').innerHTML=items.map(([icon,title,value],i)=>'<div class="rv-kpi rv-kpi-'+i+'"><div class="rv-kpi-title">'+iconTile(icon,i)+'<b>'+title+'</b></div><strong>'+value+'</strong><span class="rv-kpi-note">'+(i===6?'Concluídos da programação':'Programação atual')+'</span></div>').join('');
  $('readingProgress').textContent=progress+'%';$('readingProgressRing').style.setProperty('--pct',progress+'%');
  $('readingProgressNote').textContent=released+' de '+count+' cargas liberadas';
  $('readingLinked').textContent=String(linked);
