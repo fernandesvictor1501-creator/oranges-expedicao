@@ -25,6 +25,7 @@ async function list(){
  });
  }catch(e){host.textContent=e.message}
 }
+window.aisRefreshTickets=list;
 $('aisRefresh').addEventListener('click',list);
 setInterval(()=>{if(!document.hidden&&!$('ticketsAis').classList.contains('hidden'))list()},15000);
 list();
