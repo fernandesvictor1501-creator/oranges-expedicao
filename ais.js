@@ -1,7 +1,7 @@
 'use strict';
 const crypto=require('crypto'),pdfjs=require('pdfjs-dist/legacy/build/pdf.js'),pg=require('pg');
 const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,ssl:process.env.DATABASE_URL?.includes('localhost')?false:{rejectUnauthorized:false}});
-const ready=pool.query("CREATE TABLE IF NOT EXISTS ais_tickets (id BIGSERIAL PRIMARY KEY,digest TEXT UNIQUE NOT NULL,filename TEXT NOT NULL,ticket_number TEXT,plate TEXT,load_number TEXT,gross_kg NUMERIC,tare_kg NUMERIC,net_kg NUMERIC,linked_plate TEXT,linked_load TEXT,match_status TEXT NOT NULL DEFAULT 'review',review_reason TEXT,imported_at TIMESTAMPTZ DEFAULT NOW())");
+const ready=pool.query("CREATE TABLE IF NOT EXISTS ais_tickets (id BIGSERIAL PRIMARY KEY,digest TEXT UNIQUE NOT NULL,filename TEXT NOT NULL,ticket_number TEXT,plate TEXT,load_number TEXT,gross_kg NUMERIC,tare_kg NUMERIC,net_kg NUMERIC,linked_plate TEXT,linked_load TEXT,match_status TEXT NOT NULL DEFAULT 'review',review_reason TEXT,imported_at TIMESTAMPTZ DEFAULT NOW())").then(()=>pool.query("ALTER TABLE ais_tickets ADD COLUMN IF NOT EXISTS file_bytes BYTEA"));
 const plate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const load=v=>String(v||'').trim();
 function parse(text){
@@ -32,7 +32,7 @@ module.exports=function(app,adminAuth){
  if(!enc||enc.length>11000000||!/^[A-Za-z0-9+/=]+$/.test(enc))return res.status(400).json({error:'Arquivo inválido ou maior que 8 MB'});
  const buf=Buffer.from(enc,'base64');const isPdf=filename.toLowerCase().endsWith('.pdf'),isXml=filename.toLowerCase().endsWith('.xml');if(buf.length>8388608||!buf.length||(!isPdf&&!isXml)||(isPdf&&buf.subarray(0,5).toString()!=='%PDF-'))return res.status(400).json({error:'Envie um PDF ou XML válido de até 8 MB'});
  const digest=crypto.createHash('sha256').update(buf).digest('hex');
- try{await ready;let old=await pool.query('SELECT id,match_status,review_reason FROM ais_tickets WHERE digest=$1',[digest]);if(old.rows.length&&old.rows[0].match_status==='linked'&&old.rows[0].review_reason!=='1ª pesagem: aguardando pesagem final')return res.json({ok:true,duplicate:true,id:old.rows[0].id,status:old.rows[0].match_status,reason:old.rows[0].review_reason});
+ try{await ready;let old=await pool.query('SELECT id,match_status,review_reason,(file_bytes IS NOT NULL) AS file_available FROM ais_tickets WHERE digest=$1',[digest]);if(old.rows.length&&old.rows[0].match_status==='linked'&&old.rows[0].file_available)return res.json({ok:true,duplicate:true,id:old.rows[0].id,status:old.rows[0].match_status,reason:old.rows[0].review_reason});
  let extracted='';
  if(isXml){
    let xmlText=buf.toString('utf8').replace(/^\uFEFF/,'').trim();
@@ -70,17 +70,29 @@ module.exports=function(app,adminAuth){
  let reason=status==='linked'?(parsed.firstWeighing?'1ª pesagem: aguardando pesagem final':null):!parsed.ticket_number?'Número do ticket não identificado':parsed.plates.length!==1?'Placa ausente ou ambígua':match.length===0?'Carga não encontrada':'Mais de uma carga com a placa';
  let selected=status==='linked'?match[0]:null;
  let q;
- const values=[digest,filename,parsed.ticket_number,parsed.plate,parsed.load_number,parsed.gross_kg,parsed.tare_kg,parsed.net_kg,selected?plate(selected.placa):null,selected?load(selected.carga):null,status,reason];
+ const values=[digest,filename,parsed.ticket_number,parsed.plate,parsed.load_number,parsed.gross_kg,parsed.tare_kg,parsed.net_kg,selected?plate(selected.placa):null,selected?load(selected.carga):null,status,reason,buf];
  if(old.rows.length){
-  q=await pool.query('UPDATE ais_tickets SET filename=$2,ticket_number=$3,plate=$4,load_number=$5,gross_kg=$6,tare_kg=$7,net_kg=$8,linked_plate=$9,linked_load=$10,match_status=$11,review_reason=$12 WHERE digest=$1 RETURNING id',values);
+  q=await pool.query('UPDATE ais_tickets SET filename=$2,ticket_number=$3,plate=$4,load_number=$5,gross_kg=$6,tare_kg=$7,net_kg=$8,linked_plate=$9,linked_load=$10,match_status=$11,review_reason=$12,file_bytes=$13 WHERE digest=$1 RETURNING id',values);
  }else{
-  q=await pool.query('INSERT INTO ais_tickets(digest,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id',values);
+  q=await pool.query('INSERT INTO ais_tickets(digest,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason,file_bytes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id',values);
  }
  res.json({ok:true,id:q.rows[0].id,status,reason,ticket:parsed.ticket_number,plate:parsed.plate});
  }catch(e){console.error('AIS PDF error',e.message);res.status(503).json({error:'Erro interno no processamento do ticket. Consulte o painel de logs.',code:'AIS_PROCESSING_ERROR'})}
  });
  app.get('/api/ais/tickets',adminAuth,async(req,res)=>{try{await ready;const q=await pool.query('SELECT id,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason,imported_at FROM ais_tickets ORDER BY imported_at DESC LIMIT 500');res.json({tickets:q.rows})}catch(e){res.status(503).json({error:'Tickets indisponíveis'})}});
- app.get('/api/ais/summary',async(req,res)=>{try{await ready;const q=await pool.query("SELECT linked_plate,linked_load,ticket_number FROM ais_tickets WHERE match_status='linked' ORDER BY imported_at DESC LIMIT 2000");res.json({tickets:q.rows})}catch(e){res.status(503).json({error:'Tickets indisponíveis'})}});
+ app.get('/api/ais/summary',async(req,res)=>{try{await ready;const q=await pool.query("SELECT id,linked_plate,linked_load,ticket_number,filename,(file_bytes IS NOT NULL) AS file_available FROM ais_tickets WHERE match_status='linked' AND linked_plate IS NOT NULL AND linked_load IS NOT NULL ORDER BY imported_at DESC LIMIT 2000");res.json({tickets:q.rows.map(t=>({id:t.id,linked_plate:t.linked_plate,linked_load:t.linked_load,ticket_number:t.ticket_number,file_available:t.file_available,file_type:String(t.filename||'').toLowerCase().endsWith('.pdf')?'pdf':'xml'}))})}catch(e){res.status(503).json({error:'Tickets indisponíveis'})}});
+app.get('/api/ais/file/:id',async(req,res)=>{
+ const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<1)return res.status(404).send('Ticket não encontrado');
+ try{await ready;
+  const q=await pool.query("SELECT filename,file_bytes,linked_plate,linked_load FROM ais_tickets WHERE id=$1 AND match_status='linked' AND file_bytes IS NOT NULL",[id]);
+  if(!q.rows.length)return res.status(404).send('Arquivo indisponível. Reimporte o ticket AIS no painel administrativo.');
+  const t=q.rows[0],current=await cargos();
+  if(!current.some(x=>plate(x.placa)===plate(t.linked_plate)&&load(x.carga)===load(t.linked_load)))return res.status(404).send('Ticket sem vínculo com carregamento ativo');
+  const pdf=String(t.filename).toLowerCase().endsWith('.pdf');
+  res.set('X-Content-Type-Options','nosniff');res.set('Content-Disposition',(pdf?'inline':'attachment')+'; filename="ticket-ais-'+id+(pdf?'.pdf':'.xml')+'"');
+  res.type(pdf?'application/pdf':'application/octet-stream').send(t.file_bytes);
+ }catch(e){console.error('AIS download',e.message);res.status(503).send('Documento indisponível')}
+});
 
  // Exclusão administrativa exclusivamente da tabela de tickets AIS.
  app.get('/api/ais/admin/stats',adminAuth,async(req,res)=>{
@@ -88,7 +100,7 @@ module.exports=function(app,adminAuth){
   catch(e){console.error('AIS stats',e.message);res.status(503).json({error:'Não foi possível consultar tickets'})}
  });
  app.get('/api/ais/admin/backup',adminAuth,async(req,res)=>{
-  try{await ready;const q=await pool.query('SELECT * FROM ais_tickets ORDER BY id');
+  try{await ready;const q=await pool.query('SELECT id,digest,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason,imported_at FROM ais_tickets ORDER BY id');
   res.set('Content-Disposition','attachment; filename="backup_tickets_ais.json"');
   res.type('application/json').send(JSON.stringify({exportedAt:new Date().toISOString(),system:'Oranges Alimentos',tickets:q.rows},null,2));
   }catch(e){console.error('AIS backup',e.message);res.status(503).json({error:'Não foi possível gerar o backup'})}
