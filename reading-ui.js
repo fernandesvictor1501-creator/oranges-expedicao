@@ -2,8 +2,15 @@
 'use strict';
 const $=id=>document.getElementById(id);
 if(!$('readingView'))return;
-const ST=['Aguardando chegada','Carregando','Finalizado / documentação','Aguardando liberação','Liberado'];
-const icons=['◷','♧','▤','◴','✓'];
+const ST=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado'];
+const icons=[
+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h12v10H3zM15 10h3l3 3v4h-6"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h10v13H4zM14 11h5l2 3v4h-7M7 9h4M7 13h4"/><circle cx="8" cy="19" r="1"/><circle cx="18" cy="19" r="1"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7zM15 3v5h4M10 13h6M10 17h4"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h9l3 3v15H7zM16 3v4h3M10 12h6M10 16h6"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/></svg>'
+];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normPlate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 let tickets=[],mode='cards',sort='updated';
@@ -23,10 +30,10 @@ function cell(name,value){return '<div class="rv-field"><span>'+esc(name)+'</spa
 function link(t){
  if(!t)return '<span class="rv-ticket-missing">⚖ Ticket AIS não vinculado</span>';
  const number=t.ticket_number?'<span class="rv-ticket-number">⚖ Ticket AIS '+esc(t.ticket_number)+'</span>':'<span class="rv-ticket-number">⚖ Ticket AIS vinculado</span>';
- return number+(t.file_available?'<a class="rv-ticket-link" href="/api/ais/file/'+Number(t.id)+'" target="_blank" rel="noopener noreferrer" aria-label="Abrir ticket AIS '+esc(t.ticket_number||'')+'">↗ Ver ticket AIS</a>':'<span class="rv-ticket-unavailable" title="Arquivo ainda não foi armazenado no servidor">Reimporte para abrir o PDF</span>');
+ return number+(t.file_available?'<a class="rv-ticket-link" href="/api/ais/file/'+Number(t.id)+'" target="_blank" rel="noopener noreferrer" aria-label="Abrir ticket AIS '+esc(t.ticket_number||'')+'">↗ Ver ticket AIS</a>':'<span class="rv-ticket-unavailable" title="Arquivo ainda não foi armazenado no servidor">Reimporte para abrir PDF</span>');
 }
 function card(c){
- const st=Number.isInteger(Number(c.status))?Math.max(0,Math.min(4,Number(c.status))):0;
+ const st=Number.isInteger(Number(c.status))?Math.max(0,Math.min(5,Number(c.status))):0;
  const ticket=ticketFor(c);
  return '<article class="rv-load rv-s'+st+'"><div class="rv-load-head"><div class="rv-load-plate"><span class="rv-load-icon">♧</span><div><small>PLACA</small><strong>'+esc(c.placa||'—')+'</strong></div></div><span class="rv-pill rv-pill-'+st+'">'+icons[st]+' '+esc(ST[st])+'</span></div>'
  +'<div class="rv-load-fields">'+cell('CARGA',c.carga)+cell('PEDIDO',c.pedido)+cell('CLIENTE',c.cliente)+cell('PRODUTO',c.produto)+cell('QUANTIDADE',c.quantidade)+cell('TRANSPORTADORA',c.transportadora)+cell('MOTORISTA',c.motorista)+cell('CIDADE',c.cidade)+cell('FRETE',c.frete)+'</div>'
@@ -35,16 +42,16 @@ function card(c){
 function stats(){
  const count=all().length;
  const byStatus=ST.map((_,i)=>all().filter(c=>Number(c.status)===i).length);
- const released=byStatus[4],progress=count?Math.round(released/count*100):0;
+ const released=byStatus[5],progress=count?Math.round(released/count*100):0;
  const linked=all().filter(c=>Boolean(ticketFor(c))).length;
  const withFile=all().filter(c=>Boolean(ticketFor(c)?.file_available)).length;
- const items=[['▦','Programados',count],['♧','Aguardando chegada',byStatus[0]],['♧','Carregando',byStatus[1]],['▤','Finalizado / documentação',byStatus[2]],['◷','Aguardando liberação',byStatus[3]],['✓','Liberado',released]];
+ const items=[['▦','Programados',count],[icons[0],'Aguardando chegada',byStatus[0]],[icons[1],'Carregando',byStatus[1]],[icons[2],'Finalizado / Faturando',byStatus[2]],[icons[3],'Aguardando documentação',byStatus[3]],[icons[4],'Aguardando liberação',byStatus[4]],[icons[5],'Liberado',released]];
  $('readingStats').innerHTML=items.map(([icon,title,value],i)=>'<div class="rv-kpi rv-kpi-'+i+'"><div class="rv-kpi-title"><span aria-hidden="true">'+icon+'</span><b>'+title+'</b></div><strong>'+value+'</strong><span class="rv-kpi-note">'+(i===5?'Concluídos da programação':'Programação atual')+'</span></div>').join('');
  $('readingProgress').textContent=progress+'%';$('readingProgressRing').style.setProperty('--pct',progress+'%');
  $('readingProgressNote').textContent=released+' de '+count+' cargas liberadas';
  $('readingLinked').textContent=String(linked);
  $('readingFileCount').textContent=withFile+' arquivo(s) disponíveis para abrir';
- $('readingAttention').textContent=String(byStatus[0]+byStatus[3]);
+ $('readingAttention').textContent=String(byStatus[0]+byStatus[4]);
  $('readingAttentionNote').textContent='Aguardando chegada ou liberação';
 }
 function draw(){
