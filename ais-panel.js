@@ -11,10 +11,10 @@ async function list(){
  $('aisCount').textContent=tickets.length+' ticket(s) recebido(s)';
  $('aisReview').textContent=tickets.filter(t=>t.match_status!=='linked').length+' para conferir';
  host.innerHTML=tickets.length?tickets.map(t=>{
- const ok=t.match_status==='linked';
- return '<article class="ais-item"><div class="ais-item-head"><strong>⚖ Ticket '+esc(t.ticket_number||'não identificado')+'</strong><span class="ais-state '+(ok?'ais-good':'ais-pending')+'">'+(ok?'Vinculado':'Conferir')+'</span></div>'
+ const ok=t.match_status==='linked';const first=t.review_reason==='1ª pesagem: aguardando pesagem final';
+ return '<article class="ais-item"><div class="ais-item-head"><strong>⚖ Ticket '+esc(t.ticket_number||'não identificado')+'</strong><span class="ais-state '+(ok?'ais-good':'ais-pending')+'">'+(first?'1ª pesagem':ok?'Vinculado':'Conferir')+'</span></div>'
  +'<div class="ais-data"><span>Arquivo: '+esc(t.filename)+'</span><span>Placa: '+esc(t.plate||'—')+'</span><span>Carga PDF: '+esc(t.load_number||'—')+'</span><span>Bruto: '+weight(t.gross_kg)+'</span><span>Tara: '+weight(t.tare_kg)+'</span><span>Líquido: '+weight(t.net_kg)+'</span><span>Carga vinculada: '+esc(t.linked_load||'—')+'</span></div>'
- +(ok?'':'<p>'+esc(t.review_reason||'Vínculo pendente')+'</p><div class="ais-link"><input data-field="plate" aria-label="Placa" placeholder="Placa" value="'+esc(t.plate||'')+'"><input data-field="load" aria-label="Número da carga" placeholder="Carga" value="'+esc(t.load_number||'')+'"><button type="button" data-ticket="'+t.id+'">Vincular</button></div>')+'</article>';
+ +(first?'<p>1ª pesagem registrada: aguardando pesagem final. O peso líquido final ainda não está disponível.</p>':'')+(ok?'':'<p>'+esc(t.review_reason||'Vínculo pendente')+'</p><div class="ais-link"><input data-field="plate" aria-label="Placa" placeholder="Placa" value="'+esc(t.plate||'')+'"><input data-field="load" aria-label="Número da carga" placeholder="Carga" value="'+esc(t.load_number||'')+'"><button type="button" data-ticket="'+t.id+'">Vincular</button></div>')+'</article>';
  }).join(''):'<div class="notice">Nenhum ticket AIS importado. Selecione arquivos PDF ou XML acima e clique em Importar.</div>';
  host.querySelectorAll('[data-ticket]').forEach(btn=>btn.onclick=async()=>{
  const article=btn.closest('article'),plate=article.querySelector('[data-field="plate"]').value,carga=article.querySelector('[data-field="load"]').value;
