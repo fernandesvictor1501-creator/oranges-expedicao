@@ -81,5 +81,37 @@ module.exports=function(app,adminAuth){
  });
  app.get('/api/ais/tickets',adminAuth,async(req,res)=>{try{await ready;const q=await pool.query('SELECT id,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason,imported_at FROM ais_tickets ORDER BY imported_at DESC LIMIT 500');res.json({tickets:q.rows})}catch(e){res.status(503).json({error:'Tickets indisponíveis'})}});
  app.get('/api/ais/summary',async(req,res)=>{try{await ready;const q=await pool.query("SELECT linked_plate,linked_load,ticket_number FROM ais_tickets WHERE match_status='linked' ORDER BY imported_at DESC LIMIT 2000");res.json({tickets:q.rows})}catch(e){res.status(503).json({error:'Tickets indisponíveis'})}});
+
+ // Exclusão administrativa exclusivamente da tabela de tickets AIS.
+ app.get('/api/ais/admin/stats',adminAuth,async(req,res)=>{
+  try{await ready;const q=await pool.query("SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE match_status='linked')::int AS linked, COUNT(*) FILTER (WHERE match_status<>'linked')::int AS review FROM ais_tickets");res.json(q.rows[0])}
+  catch(e){console.error('AIS stats',e.message);res.status(503).json({error:'Não foi possível consultar tickets'})}
+ });
+ app.get('/api/ais/admin/backup',adminAuth,async(req,res)=>{
+  try{await ready;const q=await pool.query('SELECT * FROM ais_tickets ORDER BY id');
+  res.set('Content-Disposition','attachment; filename="backup_tickets_ais.json"');
+  res.type('application/json').send(JSON.stringify({exportedAt:new Date().toISOString(),system:'Oranges Alimentos',tickets:q.rows},null,2));
+  }catch(e){console.error('AIS backup',e.message);res.status(503).json({error:'Não foi possível gerar o backup'})}
+ });
+ app.post('/api/ais/admin/clear',adminAuth,async(req,res)=>{
+  const origin=req.get('origin');
+  if(origin){try{if(new URL(origin).host!==req.get('host'))return res.status(403).json({error:'Origem não permitida'})}catch(e){return res.status(403).json({error:'Origem inválida'})}}
+  if(req.body?.confirmation!=='LIMPAR TICKETS AIS'||!Number.isSafeInteger(req.body?.expectedCount)||req.body.expectedCount<0)
+   return res.status(400).json({error:'Confirmação inválida'});
+  const client=await pool.connect().catch(()=>null);
+  if(!client)return res.status(503).json({error:'Banco indisponível'});
+  try{
+   await ready;
+   await client.query('BEGIN');
+   await client.query('LOCK TABLE ais_tickets IN EXCLUSIVE MODE');
+   const before=await client.query('SELECT COUNT(*)::int AS total FROM ais_tickets');
+   const total=before.rows[0].total;
+   if(total!==req.body.expectedCount){await client.query('ROLLBACK');return res.status(409).json({error:'A lista de tickets mudou. Atualize a contagem antes de limpar.',total})}
+   const result=await client.query('DELETE FROM ais_tickets');
+   await client.query('COMMIT');
+   res.json({ok:true,deleted:result.rowCount});
+  }catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('AIS clean',e.message);res.status(503).json({error:'Não foi possível limpar os tickets'})}
+  finally{client.release()}
+ });
  app.post('/api/ais/tickets/:id/link',adminAuth,async(req,res)=>{let id=Number(req.params.id),p=plate(req.body?.plate),l=load(req.body?.carga);if(!Number.isSafeInteger(id)||id<1||!p||!l)return res.status(400).json({error:'Preencha placa e carga'});try{await ready;const found=(await cargos()).filter(c=>plate(c.placa)===p&&load(c.carga)===l);if(found.length!==1)return res.status(409).json({error:'Placa e carga não correspondem a uma única carga'});const q=await pool.query("UPDATE ais_tickets SET linked_plate=$1,linked_load=$2,match_status='linked',review_reason=NULL WHERE id=$3 RETURNING id",[p,l,id]);if(!q.rows.length)return res.status(404).json({error:'Ticket não encontrado'});res.json({ok:true})}catch(e){res.status(503).json({error:'Erro ao vincular'})}});
 };
