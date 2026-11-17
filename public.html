@@ -463,8 +463,8 @@ html[data-oranges-theme="light"] #readingView .rv-prod-empty{background:#fff!imp
 </style><script id="oranges-theme-control-script">
 (function(){
 'use strict';
-var key='oranges_visual_theme_v1',selected='dark';
-try{selected=localStorage.getItem(key)==='light'?'light':'dark'}catch(err){}
+var key='oranges_visual_theme_v1',selected='light';
+try{selected=localStorage.getItem(key)==='dark'?'dark':'light'}catch(err){}
 var root=document.documentElement,themeSheet=document.getElementById('oranges-wine-final');
 function applyTheme(value){
  selected=value==='light'?'light':'dark';
@@ -487,7 +487,70 @@ document.addEventListener('DOMContentLoaded',function(){
  applyTheme(selected);
 });
 })();
-</script></head>
+</script><style id="oranges-reference-design">
+/* Referência: Entrada de NF-e Oranges. Clean SaaS com fundo areia, branco e hero vinho. */
+html[data-oranges-theme="light"],html[data-oranges-theme="light"] body{color-scheme:light!important;background:#f7f3ee!important;color:#291e29!important}
+html[data-oranges-theme="light"] body header{background:#ffffff!important;min-height:86px!important;border-bottom:1px solid #e8e3e1!important;box-shadow:0 1px 7px #260c2309!important;padding-top:12px!important;padding-bottom:12px!important}
+html[data-oranges-theme="light"] body header h1,html[data-oranges-theme="light"] body header strong,html[data-oranges-theme="light"] body header .brand-vector-type>strong{color:#241b27!important}
+html[data-oranges-theme="light"] body header small{color:#7b6b76!important}
+html[data-oranges-theme="light"] body main{max-width:1510px!important;padding:20px 20px 90px!important}
+html[data-oranges-theme="light"] #readingView .rv-primary-nav{border:0!important;display:flex;gap:8px;margin:0 0 16px!important;padding:0!important}
+html[data-oranges-theme="light"] #readingView .rv-primary-nav button{color:#6c4d61!important;background:#fff!important;border:1px solid #eee3e8!important;box-shadow:0 1px 4px #210e2007!important;border-radius:9px!important;min-height:41px!important;padding:10px 15px!important}
+html[data-oranges-theme="light"] #readingView .rv-primary-nav button.active{background:#f4e9ed!important;color:#631f46!important;border-color:#e8ccd9!important;font-weight:800}
+html[data-oranges-theme="light"] #readingView .rv-primary-nav button:hover{border-color:#b78a9f!important}
+html[data-oranges-theme="light"] #readingView .rv-top{position:relative;overflow:hidden;background:linear-gradient(104deg,#49103d 0%,#5b204b 48%,#955463 100%)!important;border:1px solid #935b77!important;border-radius:15px!important;box-shadow:0 11px 28px #46143b24!important;min-height:168px;padding:28px 30px!important;margin-bottom:21px!important}
+html[data-oranges-theme="light"] #readingView .rv-top:after{content:"";position:absolute;right:32px;top:16px;width:110px;height:132px;background:url('/oranges-symbol.svg') center/contain no-repeat;filter:grayscale(1) brightness(0) invert(1);opacity:.64;pointer-events:none}
+html[data-oranges-theme="light"] #readingView .rv-top>*{position:relative;z-index:1}
+html[data-oranges-theme="light"] #readingView .rv-top .rv-eyebrow{color:#ffdbec!important;letter-spacing:.08em!important}
+html[data-oranges-theme="light"] #readingView .rv-top h2{color:#fff!important;font-size:clamp(24px,2.3vw,32px)!important;letter-spacing:-.035em!important;margin:7px 0!important}
+html[data-oranges-theme="light"] #readingView .rv-top p{color:#f5deea!important;font-size:13px!important;max-width:750px!important}
+html[data-oranges-theme="light"] #readingView .rv-top .rv-live-block{margin-right:116px!important;gap:8px!important}
+html[data-oranges-theme="light"] #readingView .rv-top .rv-live{background:#e5ffed!important;color:#16633f!important;border:1px solid #b3d9bf!important}
+html[data-oranges-theme="light"] #readingView .rv-top #readingStamp{color:#fce5f0!important}
+html[data-oranges-theme="light"] #readingView .rv-top .rv-readonly{background:#ffffff19!important;color:#fff!important;border:1px solid #ffffff55!important}
+html[data-oranges-theme="light"] #readingView .rv-stats{gap:12px!important;margin:0 0 19px!important}
+html[data-oranges-theme="light"] #readingView .rv-stats .rv-kpi{background:#fff!important;border:1px solid #ebe5e2!important;border-radius:12px!important;box-shadow:0 3px 12px #3b1b3009!important;min-height:124px!important;padding:16px 14px!important}
+html[data-oranges-theme="light"] #readingView .rv-kpi>strong{font-size:29px!important;color:#762c50!important}
+html[data-oranges-theme="light"] #readingView .rv-kpi-title b{color:#6b5665!important}
+html[data-oranges-theme="light"] #readingView .rv-kpi-note{color:#93818b!important}
+html[data-oranges-theme="light"] #readingView .rv-diagnostic{background:#fff!important;border:1px solid #ebe5e2!important;border-radius:13px!important;box-shadow:0 3px 12px #3b1b3009!important;padding:22px!important}
+html[data-oranges-theme="light"] #readingView .rv-diag-intro strong,html[data-oranges-theme="light"] #readingView .rv-diag-stat strong{color:#662044!important}
+html[data-oranges-theme="light"] #readingView .rv-diag-intro p,html[data-oranges-theme="light"] #readingView .rv-diag-stat small{color:#7a6a76!important}
+html[data-oranges-theme="light"] #readingView .rv-listbar{margin-top:22px!important}
+html[data-oranges-theme="light"] #readingView .rv-listbar h3{color:#301b29!important}
+html[data-oranges-theme="light"] #readingView .rv-filterbar{background:#fff!important;border:1px solid #ebe5e2!important;border-radius:13px!important;padding:14px!important;gap:10px!important;box-shadow:0 3px 13px #3b1b3009!important}
+html[data-oranges-theme="light"] #readingView .rv-search-label input,html[data-oranges-theme="light"] #readingView .rv-filterbar select,html[data-oranges-theme="light"] #readingView .rv-list-actions select,html[data-oranges-theme="light"] #readingView #rvTicketSearch{background:#fff!important;color:#372033!important;border:1px solid #d9d1d7!important;border-radius:8px!important}
+html[data-oranges-theme="light"] #readingView .rv-ghost,html[data-oranges-theme="light"] #readingView .rv-mode button{background:#fff!important;color:#6e2b4d!important;border:1px solid #dfd3d9!important;border-radius:8px!important}
+html[data-oranges-theme="light"] #readingView .rv-mode button.active{background:#702b4e!important;color:#fff!important;border-color:#702b4e!important}
+html[data-oranges-theme="light"] #readingView .rv-chip{background:#fff!important;color:#6d5362!important;border:1px solid #e8d9e1!important}
+html[data-oranges-theme="light"] #readingView .rv-chip.active{background:#702b4e!important;color:#fff!important;border-color:#702b4e!important}
+html[data-oranges-theme="light"] #readingView .rv-load{background:#fff!important;color:#2a2330!important;border:1px solid #e8e1e4!important;border-radius:13px!important;box-shadow:0 3px 12px #3b1b300b!important}
+html[data-oranges-theme="light"] #readingView .rv-load:hover{background:#fff!important;border-color:#d1b8c7!important;box-shadow:0 7px 18px #3b1b3017!important}
+html[data-oranges-theme="light"] #readingView .rv-load-plate strong,html[data-oranges-theme="light"] #readingView .rv-field strong{color:#362234!important}
+html[data-oranges-theme="light"] #readingView .rv-field span,html[data-oranges-theme="light"] #readingView .rv-load-plate small{color:#847482!important}
+html[data-oranges-theme="light"] #readingView .rv-load-fields,html[data-oranges-theme="light"] #readingView .rv-field{border-color:#eadfe5!important}
+html[data-oranges-theme="light"] #readingView .rv-load-icon{background:#f5e6ed!important;color:#702f51!important}
+html[data-oranges-theme="light"] #readingView .rv-load-icon svg{stroke:#702f51!important}
+html[data-oranges-theme="light"] #readingView .rv-ticket-number{background:#f8eaf1!important;color:#783652!important;border-color:#ead7e1!important}
+html[data-oranges-theme="light"] #readingView .rv-ticket-link{background:#84364f!important;color:#fff!important;border-color:#84364f!important}
+html[data-oranges-theme="light"] #readingView .rv-ticket-grid .rv-ticket-card,html[data-oranges-theme="light"] #readingView .rv-prod-kpi,html[data-oranges-theme="light"] #readingView .rv-prod-panel{background:#fff!important;border:1px solid #e9e1e4!important;border-radius:13px!important;box-shadow:0 3px 12px #3b1b3009!important;color:#372638!important}
+html[data-oranges-theme="light"] #readingView .rv-ticket-description strong,html[data-oranges-theme="light"] #readingView .rv-prod-kpi strong,html[data-oranges-theme="light"] #readingView .rv-prod-panel h3,html[data-oranges-theme="light"] #readingView .rv-prod-duration strong{color:#702b4e!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-row,html[data-oranges-theme="light"] #readingView .rv-prod-duration span{color:#3d3040!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-duration small{color:#827684!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-table td{background:#fff!important;color:#352f3a!important;border-color:#eee3e8!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-table th{background:#f9f2f5!important;color:#6e2549!important}
+html[data-oranges-theme="light"] #readingView .rv-ticket-hero{background:linear-gradient(105deg,#49103d,#995b70)!important;border-color:#9d5e7d!important;box-shadow:0 8px 23px #46143b18!important}
+html[data-oranges-theme="light"] #readingView .rv-ticket-hero h2{color:#fff!important}
+html[data-oranges-theme="light"] #readingView .rv-ticket-hero p{color:#f9e4ee!important}
+html[data-oranges-theme="light"] #readingView .rv-ticket-hero .rv-readonly{background:#ffffff18!important;color:#fff!important;border-color:#ffffff4d!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-period{color:#fce8f3!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-period select{background:#fff!important;color:#49103d!important;border:1px solid #e5cdd9!important}
+html[data-oranges-theme="light"] #readingView .rv-top .rv-prod-period{margin-right:114px!important}
+html[data-oranges-theme="light"] #readingView .rv-pill-3{background:#f97316!important;color:#fff!important}
+html[data-oranges-theme="light"] #readingView .rv-load.rv-s3{border-left:5px solid #f97316!important}
+@media(max-width:900px){html[data-oranges-theme="light"] #readingView .rv-top:after{width:60px;height:78px;right:15px;top:16px;opacity:.32}html[data-oranges-theme="light"] #readingView .rv-top .rv-live-block,html[data-oranges-theme="light"] #readingView .rv-top .rv-prod-period{margin-right:50px!important}}
+@media(max-width:650px){html[data-oranges-theme="light"] body main{padding:12px 10px 90px!important}html[data-oranges-theme="light"] #readingView .rv-top{padding:22px 18px!important}html[data-oranges-theme="light"] #readingView .rv-top:after{opacity:.15}html[data-oranges-theme="light"] #readingView .rv-top .rv-live-block,html[data-oranges-theme="light"] #readingView .rv-top .rv-prod-period{margin-right:0!important}html[data-oranges-theme="light"] #readingView .rv-primary-nav{display:flex!important;overflow-x:auto!important}html[data-oranges-theme="light"] #readingView .rv-primary-nav button{flex:0 0 auto!important}html[data-oranges-theme="light"] #readingView .rv-filterbar{padding:10px!important}}
+</style></head>
 <body><header><div class="brand-partners" aria-label="Marca Oranges Alimentos"><div class="brand-vector-lockup"><img src="/oranges-symbol.svg" alt="" width="44" height="48"><div class="brand-vector-type"><strong>ORANGES</strong><small>alimentos</small></div></div></div><div><h1>CONTROLE DE CARREGAMENTO - FATURAMENTO</h1><small>Oranges Alimentos · Acompanhamento dos carregamentos</small></div><button type="button" id="orangesThemeToggle" class="oranges-theme-toggle" aria-label="Ativar modo claro" title="Ativar modo claro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg><span class="theme-toggle-label">Modo claro</span></button></header><main>
 <section id="readingView" class="rv-view" aria-label="Painel de leitura Oranges"><nav class="rv-primary-nav" aria-label="Navegação do painel de leitura"><button type="button" class="active" data-rv-tab="dashboard" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Visão operacional</button><button type="button" data-rv-tab="tickets" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4zM12 7v10"/></svg>Consultar tickets AIS</button><button type="button" data-rv-tab="produtividade" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V9M10 20V4M16 20v-7M22 20V7"/></svg>Produtividade</button></nav>
 <div id="rvDashboardTab">
