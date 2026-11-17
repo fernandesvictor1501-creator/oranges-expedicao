@@ -8,7 +8,7 @@ function parse(text){
  const s=String(text||'').replace(/\s+/g,' '),p=[...s.matchAll(/\b([A-Z]{3}[-\s]?\d[A-Z0-9][0-9]{2})\b/gi)].map(x=>plate(x[1])),plates=[...new Set(p)];
  const ticket=s.match(/\bticket(?:\s*(?:de|da)\s*(?:pesagem|balan[cç]a))?\s*(?:n[º°o.]?\s*|n[uú]mero\s*|[:#-]\s*)(\d{3,15})\b/i);
  const carga=s.match(/\b(?:carga|carregamento)\s*(?:n[º°o.]?\s*|[:#-]\s*)(\d{3,14})\b/i);
- const weight=(label)=>{let m=s.match(new RegExp('\\b'+label+'\\s*[:=-]?\\s*([\\d.,]+)\\s*(?:kg)?','i'));if(!m)return null;let v=m[1];if(v.includes(',')&&v.includes('.'))v=v.replace(/\./g,'').replace(',','.');else if(v.includes(','))v=v.replace(',','.');else if(/^\d{1,3}(?:\.\d{3})+$/.test(v))v=v.replace(/\./g,'');let n=Number(v);return n>0&&n<120000?n:null};
+ const weight=(label)=>{let m=s.match(new RegExp('\\b(?:'+label+')\\s*[:=-]?\\s*([\\d.,]+)\\s*(?:kg)?','i'));if(!m||!m[1])return null;let v=m[1];if(v.includes(',')&&v.includes('.'))v=v.replace(/\./g,'').replace(',','.');else if(v.includes(','))v=v.replace(',','.');else if(/^\d{1,3}(?:\.\d{3})+$/.test(v))v=v.replace(/\./g,'');let n=Number(v);return n>0&&n<120000?n:null};
  return {plates,plate:plates.length===1?plates[0]:null,ticket_number:ticket?.[1]||null,load_number:carga?.[1]||null,gross_kg:weight('peso\\s*bruto|bruto'),tare_kg:weight('tara'),net_kg:weight('peso\\s*l[ií]quido|l[ií]quido')};
 }
 async function cargos(){const q=await pool.query('SELECT dados FROM app_state WHERE id=1');return q.rows[0]?.dados?.cargas||[]}
