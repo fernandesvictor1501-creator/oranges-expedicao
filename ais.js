@@ -15,12 +15,24 @@ async function cargos(){const q=await pool.query('SELECT dados FROM app_state WH
 function tokenAuth(req,res,next){const a=String(process.env.AIS_SYNC_TOKEN||''),b=String(req.get('x-ais-token')||'');if(!a||!b||b.length>256||!crypto.timingSafeEqual(crypto.createHash('sha256').update(a).digest(),crypto.createHash('sha256').update(b).digest()))return res.status(401).json({error:'Não autorizado'});next()}
 module.exports=function(app,adminAuth){
  app.post('/api/ais/ingest',(req,res,next)=>req.session?.admin?next():tokenAuth(req,res,next),async(req,res)=>{
- const enc=String(req.body?.pdf_base64||''),filename=String(req.body?.filename||'ticket.pdf').replace(/[\/\\\x00-\x1f]/g,'_').slice(0,150);
- if(!enc||enc.length>11000000||!/^[A-Za-z0-9+/=]+$/.test(enc))return res.status(400).json({error:'PDF inválido ou maior que 8 MB'});
- const buf=Buffer.from(enc,'base64');if(buf.length>8388608||buf.subarray(0,5).toString()!=='%PDF-')return res.status(400).json({error:'PDF inválido ou maior que 8 MB'});
+ const enc=String(req.body?.file_base64||req.body?.pdf_base64||''),filename=String(req.body?.filename||'ticket.pdf').replace(/[\/\\\x00-\x1f]/g,'_').slice(0,150);
+ if(!enc||enc.length>11000000||!/^[A-Za-z0-9+/=]+$/.test(enc))return res.status(400).json({error:'Arquivo inválido ou maior que 8 MB'});
+ const buf=Buffer.from(enc,'base64');const isPdf=filename.toLowerCase().endsWith('.pdf'),isXml=filename.toLowerCase().endsWith('.xml');if(buf.length>8388608||!buf.length||(!isPdf&&!isXml)||(isPdf&&buf.subarray(0,5).toString()!=='%PDF-'))return res.status(400).json({error:'Envie um PDF ou XML válido de até 8 MB'});
  const digest=crypto.createHash('sha256').update(buf).digest('hex');
  try{await ready;let old=await pool.query('SELECT id,match_status,review_reason FROM ais_tickets WHERE digest=$1',[digest]);if(old.rows.length)return res.json({ok:true,duplicate:true,id:old.rows[0].id,status:old.rows[0].match_status,reason:old.rows[0].review_reason});
  let extracted='';
+ if(isXml){
+   let xmlText=buf.toString('utf8').replace(/^\uFEFF/,'').trim();
+   if(!/^<\?xml\b|^<[A-Za-z_][\w:.-]*[\s>]/i.test(xmlText)||/<!DOCTYPE|<!ENTITY/i.test(xmlText))return res.status(422).json({error:'XML inválido ou com conteúdo não permitido'});
+   // Textos e campos explícitos são preservados para a identificação, sem executar entidades externas.
+   extracted=xmlText.replace(/<[^>]*>/g,' ').replace(/&(?:amp|lt|gt|quot|apos);/g,' ');
+   const field=(names)=>{for(const name of names){const match=xmlText.match(new RegExp('<(?:[\\w-]+:)?'+name+'(?:\\s[^>]*)?>([^<]{1,140})<\\/(?:[\\w-]+:)?'+name+'>','i'));if(match)return match[1].trim()}return null};
+   const maybeTicket=field(['numeroTicket','numTicket','nTicket','ticket','numero_tiquete','nrTicket','numeroPesagem']);
+   const maybePlate=field(['placa','placaVeiculo','placaCavalo','placa_veiculo']);
+   const maybeLoad=field(['carga','numeroCarga','numCarga']);
+   const pairs=[maybeTicket&&' Ticket: '+maybeTicket,maybePlate&&' Placa: '+maybePlate,maybeLoad&&' Carga: '+maybeLoad].filter(Boolean);
+   extracted=pairs.join(' ')+ ' ' + extracted;
+ }else{
  try{
    const loading=pdfjs.getDocument({data:new Uint8Array(buf),useSystemFonts:true,disableFontFace:true,isEvalSupported:false,stopAtErrors:false});
    const document=await loading.promise;
@@ -37,7 +49,8 @@ module.exports=function(app,adminAuth){
    console.error('AIS PDF parsing failed',filename,error.message);
    return res.status(422).json({error:'Não foi possível extrair texto deste PDF. Se ele for uma imagem digitalizada, envie um exemplo para configurar leitura OCR.',code:'PDF_READ_ERROR'});
  }
- if(!extracted.trim())return res.status(422).json({error:'Este PDF não contém texto selecionável. É necessário OCR para este formato.',code:'PDF_NO_TEXT'});
+ }
+ if(!extracted.trim())return res.status(422).json({error:'O arquivo não possui texto legível; para PDFs digitalizados será necessário OCR.',code:'NO_TEXT'});
  const parsed=parse(extracted);
  let match=[];if(parsed.plate)match=(await cargos()).filter(c=>plate(c.placa)===parsed.plate&&(!parsed.load_number||load(c.carga)===parsed.load_number));
  let status=parsed.ticket_number&&parsed.plates.length===1&&match.length===1?'linked':'review';
