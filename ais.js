@@ -14,7 +14,7 @@ function parse(text){
 async function cargos(){const q=await pool.query('SELECT dados FROM app_state WHERE id=1');return q.rows[0]?.dados?.cargas||[]}
 function tokenAuth(req,res,next){const a=String(process.env.AIS_SYNC_TOKEN||''),b=String(req.get('x-ais-token')||'');if(!a||!b||b.length>256||!crypto.timingSafeEqual(crypto.createHash('sha256').update(a).digest(),crypto.createHash('sha256').update(b).digest()))return res.status(401).json({error:'Não autorizado'});next()}
 module.exports=function(app,adminAuth){
- app.post('/api/ais/ingest',tokenAuth,async(req,res)=>{
+ app.post('/api/ais/ingest',(req,res,next)=>req.session?.admin?next():tokenAuth(req,res,next),async(req,res)=>{
  const enc=String(req.body?.pdf_base64||''),filename=String(req.body?.filename||'ticket.pdf').replace(/[\/\\\x00-\x1f]/g,'_').slice(0,150);
  if(!enc||enc.length>11000000||!/^[A-Za-z0-9+/=]+$/.test(enc))return res.status(400).json({error:'PDF inválido ou maior que 8 MB'});
  const buf=Buffer.from(enc,'base64');if(buf.length>8388608||buf.subarray(0,5).toString()!=='%PDF-')return res.status(400).json({error:'PDF inválido ou maior que 8 MB'});
