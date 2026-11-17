@@ -35,7 +35,7 @@ function link(t){
 function card(c){
  const st=Number.isInteger(Number(c.status))?Math.max(0,Math.min(5,Number(c.status))):0;
  const ticket=ticketFor(c);
- return '<article class="rv-load rv-s'+st+'"><div class="rv-load-head"><div class="rv-load-plate"><span class="rv-load-icon">♧</span><div><small>PLACA</small><strong>'+esc(c.placa||'—')+'</strong></div></div><span class="rv-pill rv-pill-'+st+'">'+icons[st]+' '+esc(ST[st])+'</span></div>'
+ return '<article class="rv-load rv-s'+st+'"><div class="rv-load-head"><div class="rv-load-plate"><span class="rv-load-icon">'+icons[st]+'</span><div><small>PLACA</small><strong>'+esc(c.placa||'—')+'</strong></div></div><span class="rv-pill rv-pill-'+st+'">'+icons[st]+' '+esc(ST[st])+'</span></div>'
  +'<div class="rv-load-fields">'+cell('CARGA',c.carga)+cell('PEDIDO',c.pedido)+cell('CLIENTE',c.cliente)+cell('PRODUTO',c.produto)+cell('QUANTIDADE',c.quantidade)+cell('TRANSPORTADORA',c.transportadora)+cell('MOTORISTA',c.motorista)+cell('CIDADE',c.cidade)+cell('FRETE',c.frete)+'</div>'
  +'<div class="rv-load-foot"><span class="rv-updated">◷ Atualizado: '+esc(c.atualizado||'—')+'</span><div class="rv-ticket-actions">'+link(ticket)+'</div></div></article>';
 }
@@ -46,7 +46,7 @@ function stats(){
  const linked=all().filter(c=>Boolean(ticketFor(c))).length;
  const withFile=all().filter(c=>Boolean(ticketFor(c)?.file_available)).length;
  const items=[['▦','Programados',count],[icons[0],'Aguardando chegada',byStatus[0]],[icons[1],'Carregando',byStatus[1]],[icons[2],'Finalizado / Faturando',byStatus[2]],[icons[3],'Aguardando documentação',byStatus[3]],[icons[4],'Aguardando liberação',byStatus[4]],[icons[5],'Liberado',released]];
- $('readingStats').innerHTML=items.map(([icon,title,value],i)=>'<div class="rv-kpi rv-kpi-'+i+'"><div class="rv-kpi-title"><span aria-hidden="true">'+icon+'</span><b>'+title+'</b></div><strong>'+value+'</strong><span class="rv-kpi-note">'+(i===5?'Concluídos da programação':'Programação atual')+'</span></div>').join('');
+ $('readingStats').innerHTML=items.map(([icon,title,value],i)=>'<div class="rv-kpi rv-kpi-'+i+'"><div class="rv-kpi-title"><span aria-hidden="true">'+icon+'</span><b>'+title+'</b></div><strong>'+value+'</strong><span class="rv-kpi-note">'+(i===6?'Concluídos da programação':'Programação atual')+'</span></div>').join('');
  $('readingProgress').textContent=progress+'%';$('readingProgressRing').style.setProperty('--pct',progress+'%');
  $('readingProgressNote').textContent=released+' de '+count+' cargas liberadas';
  $('readingLinked').textContent=String(linked);
