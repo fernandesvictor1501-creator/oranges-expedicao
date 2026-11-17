@@ -5,11 +5,24 @@ const ready=pool.query("CREATE TABLE IF NOT EXISTS ais_tickets (id BIGSERIAL PRI
 const plate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const load=v=>String(v||'').trim();
 function parse(text){
- const s=String(text||'').replace(/\s+/g,' '),p=[...s.matchAll(/\b([A-Z]{3}[-\s]?\d[A-Z0-9][0-9]{2})\b/gi)].map(x=>plate(x[1])),plates=[...new Set(p)];
- const ticket=s.match(/\bticket(?:\s*(?:de|da)\s*(?:pesagem|balan[cç]a))?\s*(?:n[º°o.]?\s*|n[uú]mero\s*|[:#-]\s*)(\d{3,15})\b/i);
- const carga=s.match(/\b(?:carga|carregamento)\s*(?:n[º°o.]?\s*|[:#-]\s*)(\d{3,14})\b/i);
- const weight=(label)=>{let m=s.match(new RegExp('\\b(?:'+label+')\\s*[:=-]?\\s*([\\d.,]+)\\s*(?:kg)?','i'));if(!m||!m[1])return null;let v=m[1];if(v.includes(',')&&v.includes('.'))v=v.replace(/\./g,'').replace(',','.');else if(v.includes(','))v=v.replace(',','.');else if(/^\d{1,3}(?:\.\d{3})+$/.test(v))v=v.replace(/\./g,'');let n=Number(v);return n>0&&n<120000?n:null};
- return {plates,plate:plates.length===1?plates[0]:null,ticket_number:ticket?.[1]||null,load_number:carga?.[1]||null,gross_kg:weight('peso\\s*bruto|bruto'),tare_kg:weight('tara'),net_kg:weight('peso\\s*l[ií]quido|l[ií]quido')};
+ const source=String(text||'').normalize('NFKC').replace(/\s+/g,' ').trim();
+ const ticket_number=[
+   /\bTicket\s*(?:de\s*)?(?:Peso|Pesagem|Balan[cç]a)?\s*(?:N[º°o]\.?\s*|N[uú]mero\s*|#\s*|:\s*|-+\s*)(\d{5,15})\b/i,
+   /\bN[º°o]\.?\s*(\d{6,15})\b/i
+ ].map(re=>source.match(re)?.[1]).find(Boolean)||null;
+ const plates=[...new Set([...source.matchAll(/\b([A-Z]{3}[-\s]?\d[A-Z0-9]\d{2})\b/gi)].map(x=>plate(x[1])))];
+ const carga=source.match(/\b(?:OE\s*\/\s*)?Carga\s*(?:N[º°o]\.?\s*|:|#|-)?\s*(\d{3,14})\b/i);
+ function value(labels){
+   const m=source.match(new RegExp('(?:^|\\b)(?:'+labels+')\\s*[:=]\\s*(-?\\d[\\d.,]*)\\s*(?:kg)?','i'));
+   if(!m?.[1])return null;
+   const raw=m[1].trim();
+   const cleaned=raw.includes(',')?raw.replace(/\./g,'').replace(',','.'): /^-?\d{1,3}(?:\.\d{3})+$/.test(raw)?raw.replace(/\./g,''):raw;
+   const n=Number(cleaned);
+   // 1a pesagem AIS: bruto zero e líquido negativo não representam o peso final.
+   return Number.isFinite(n)&&n>0&&n<=120000?n:null;
+ }
+ const firstWeighing=/\b(?:SA[IÍ]DA|ENTRADA)\s*\(\s*1[aª]?\s*Pes\.?\s*\)/i.test(source);
+ return {plates,plate:plates.length===1?plates[0]:null,ticket_number,load_number:carga?.[1]||null,gross_kg:value('Peso\\s*Bruto'),tare_kg:value('Tara(?!\\s*Adicional)'),net_kg:value('Peso\\s*L[ií]quido|Peso\\s*L[ií]q\\.?\\s*\\(Ve[ií]culo\\)'),firstWeighing};
 }
 async function cargos(){const q=await pool.query('SELECT dados FROM app_state WHERE id=1');return q.rows[0]?.dados?.cargas||[]}
 function tokenAuth(req,res,next){const a=String(process.env.AIS_SYNC_TOKEN||''),b=String(req.get('x-ais-token')||'');if(!a||!b||b.length>256||!crypto.timingSafeEqual(crypto.createHash('sha256').update(a).digest(),crypto.createHash('sha256').update(b).digest()))return res.status(401).json({error:'Não autorizado'});next()}
@@ -19,7 +32,7 @@ module.exports=function(app,adminAuth){
  if(!enc||enc.length>11000000||!/^[A-Za-z0-9+/=]+$/.test(enc))return res.status(400).json({error:'Arquivo inválido ou maior que 8 MB'});
  const buf=Buffer.from(enc,'base64');const isPdf=filename.toLowerCase().endsWith('.pdf'),isXml=filename.toLowerCase().endsWith('.xml');if(buf.length>8388608||!buf.length||(!isPdf&&!isXml)||(isPdf&&buf.subarray(0,5).toString()!=='%PDF-'))return res.status(400).json({error:'Envie um PDF ou XML válido de até 8 MB'});
  const digest=crypto.createHash('sha256').update(buf).digest('hex');
- try{await ready;let old=await pool.query('SELECT id,match_status,review_reason FROM ais_tickets WHERE digest=$1',[digest]);if(old.rows.length)return res.json({ok:true,duplicate:true,id:old.rows[0].id,status:old.rows[0].match_status,reason:old.rows[0].review_reason});
+ try{await ready;let old=await pool.query('SELECT id,match_status,review_reason FROM ais_tickets WHERE digest=$1',[digest]);if(old.rows.length&&old.rows[0].match_status==='linked'&&old.rows[0].review_reason!=='1ª pesagem: aguardando pesagem final')return res.json({ok:true,duplicate:true,id:old.rows[0].id,status:old.rows[0].match_status,reason:old.rows[0].review_reason});
  let extracted='';
  if(isXml){
    let xmlText=buf.toString('utf8').replace(/^\uFEFF/,'').trim();
@@ -54,9 +67,15 @@ module.exports=function(app,adminAuth){
  const parsed=parse(extracted);
  let match=[];if(parsed.plate)match=(await cargos()).filter(c=>plate(c.placa)===parsed.plate&&(!parsed.load_number||load(c.carga)===parsed.load_number));
  let status=parsed.ticket_number&&parsed.plates.length===1&&match.length===1?'linked':'review';
- let reason=status==='linked'?null:!parsed.ticket_number?'Número do ticket não identificado':parsed.plates.length!==1?'Placa ausente ou ambígua':match.length===0?'Carga não encontrada':'Mais de uma carga com a placa';
+ let reason=status==='linked'?(parsed.firstWeighing?'1ª pesagem: aguardando pesagem final':null):!parsed.ticket_number?'Número do ticket não identificado':parsed.plates.length!==1?'Placa ausente ou ambígua':match.length===0?'Carga não encontrada':'Mais de uma carga com a placa';
  let selected=status==='linked'?match[0]:null;
- let q=await pool.query('INSERT INTO ais_tickets(digest,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id',[digest,filename,parsed.ticket_number,parsed.plate,parsed.load_number,parsed.gross_kg,parsed.tare_kg,parsed.net_kg,selected?plate(selected.placa):null,selected?load(selected.carga):null,status,reason]);
+ let q;
+ const values=[digest,filename,parsed.ticket_number,parsed.plate,parsed.load_number,parsed.gross_kg,parsed.tare_kg,parsed.net_kg,selected?plate(selected.placa):null,selected?load(selected.carga):null,status,reason];
+ if(old.rows.length){
+  q=await pool.query('UPDATE ais_tickets SET filename=$2,ticket_number=$3,plate=$4,load_number=$5,gross_kg=$6,tare_kg=$7,net_kg=$8,linked_plate=$9,linked_load=$10,match_status=$11,review_reason=$12 WHERE digest=$1 RETURNING id',values);
+ }else{
+  q=await pool.query('INSERT INTO ais_tickets(digest,filename,ticket_number,plate,load_number,gross_kg,tare_kg,net_kg,linked_plate,linked_load,match_status,review_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id',values);
+ }
  res.json({ok:true,id:q.rows[0].id,status,reason,ticket:parsed.ticket_number,plate:parsed.plate});
  }catch(e){console.error('AIS PDF error',e.message);res.status(503).json({error:'Erro interno no processamento do ticket. Consulte o painel de logs.',code:'AIS_PROCESSING_ERROR'})}
  });
