@@ -459,7 +459,54 @@ main>section tbody tr:hover td{background:#522045!important}
 main>section .pill.s3,#lista .pill.s3,#lista td .pill.s3,.mac .pill.s3{background:#F97316!important;color:#fff!important;border:1px solid #FDBA74!important;box-shadow:0 0 0 2px #F973162c!important}
 #painel .cards .card:nth-child(5){border-top:4px solid #F97316!important}
 #lista .next.status-button-3{background:#C2510D!important;color:#fff!important;border-color:#F97316!important}
-</style></head><body><header><div class="brand-partners" aria-label="Marca Oranges Alimentos"><div class="brand-vector-lockup"><img src="/oranges-symbol.svg" alt="" width="44" height="48"><div class="brand-vector-type"><strong>ORANGES</strong><small>alimentos</small></div></div></div><div><strong>CONTROLE DE CARREGAMENTO - FATURAMENTO</strong><small>ORANGES ALIMENTOS · Acompanhamento de carregamentos</small></div></header><main><nav><button data-tab="importar" class="active">Importação</button><button data-tab="painel">Painel</button><button data-tab="produtividade">Produtividade</button><button data-tab="ticketsAis">Tickets AIS</button><button data-tab="limparTicketsAis">Limpar Tickets AIS</button><button data-tab="cadastro">Nova carga</button><button data-tab="historico">Histórico</button><button data-tab="config">Dados e backup</button><button data-tab="limpeza">Limpar programação</button></nav>
+</style><style id="oranges-theme-control-style">
+body header{position:relative}
+.oranges-theme-toggle{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;padding:10px 13px!important;border:1px solid #b68da7!important;border-radius:10px!important;background:#fff5ef!important;color:#49103d!important;font:700 12px Inter,system-ui,Arial,sans-serif!important;cursor:pointer!important;box-shadow:none!important;flex:0 0 auto}
+.oranges-theme-toggle svg{height:17px;width:17px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.oranges-theme-toggle:hover{filter:brightness(.96)}
+.oranges-theme-toggle:focus-visible{outline:3px solid #f9b757;outline-offset:3px}
+html[data-oranges-theme="light"] .oranges-theme-toggle{background:#49103d!important;color:#fff!important;border-color:#49103d!important}
+html[data-oranges-theme="light"] body header{background:#fff!important;border-color:#e1e5ed!important}
+html[data-oranges-theme="light"] body{background:#f6f8fb!important;color:#293345!important}
+html[data-oranges-theme="light"] body header h1,html[data-oranges-theme="light"] body header strong,html[data-oranges-theme="light"] body header .brand-vector-type>strong{color:#49103d!important}
+html[data-oranges-theme="light"] body header small{color:#647085!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-panel,html[data-oranges-theme="light"] #readingView .rv-prod-kpi{background:#fff!important;color:#293345!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-kpi strong,html[data-oranges-theme="light"] #readingView .rv-prod-panel h3,html[data-oranges-theme="light"] #readingView .rv-prod-duration strong{color:#49103d!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-row,html[data-oranges-theme="light"] #readingView .rv-prod-duration span,html[data-oranges-theme="light"] #readingView .rv-prod-duration small{color:#647084!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-table td{background:#fff!important;color:#273247!important;border-color:#e2e7ed!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-table th{background:#f8edf4!important;color:#49103d!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-track{background:#e8edf3!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-period{color:#526177!important}
+html[data-oranges-theme="light"] #readingView .rv-prod-empty{background:#fff!important;color:#68778b!important;border-color:#dce2eb!important}
+@media(max-width:750px){.oranges-theme-toggle{padding:9px!important;gap:5px;font-size:11px!important}.oranges-theme-toggle .theme-toggle-label{display:none}body header{flex-wrap:wrap!important}}
+</style><script id="oranges-theme-control-script">
+(function(){
+'use strict';
+var key='oranges_visual_theme_v1',selected='dark';
+try{selected=localStorage.getItem(key)==='light'?'light':'dark'}catch(err){}
+var root=document.documentElement,themeSheet=document.getElementById('oranges-wine-final');
+function applyTheme(value){
+ selected=value==='light'?'light':'dark';
+ root.setAttribute('data-oranges-theme',selected);
+ root.style.colorScheme=selected==='light'?'light':'dark';
+ if(themeSheet){themeSheet.disabled=selected==='light';if(themeSheet.sheet)themeSheet.sheet.disabled=selected==='light'}
+ var toggle=document.getElementById('orangesThemeToggle');
+ if(toggle){
+  var light=selected==='light';
+  toggle.setAttribute('aria-label',light?'Ativar modo escuro':'Ativar modo claro');
+  toggle.setAttribute('title',light?'Ativar modo escuro':'Ativar modo claro');
+  toggle.setAttribute('aria-pressed',String(light));
+  toggle.innerHTML=(light?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13.5A9 9 0 0 1 10.5 3.5 9 9 0 1 0 20.5 13.5Z"/></svg><span class="theme-toggle-label">Modo escuro</span>':'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><span class="theme-toggle-label">Modo claro</span>');
+ }
+}
+applyTheme(selected);
+document.addEventListener('DOMContentLoaded',function(){
+ var toggle=document.getElementById('orangesThemeToggle');
+ if(toggle){toggle.addEventListener('click',function(){applyTheme(selected==='light'?'dark':'light');try{localStorage.setItem(key,selected)}catch(err){}})}
+ applyTheme(selected);
+});
+})();
+</script></head><body><header><div class="brand-partners" aria-label="Marca Oranges Alimentos"><div class="brand-vector-lockup"><img src="/oranges-symbol.svg" alt="" width="44" height="48"><div class="brand-vector-type"><strong>ORANGES</strong><small>alimentos</small></div></div></div><div><strong>CONTROLE DE CARREGAMENTO - FATURAMENTO</strong><small>ORANGES ALIMENTOS · Acompanhamento de carregamentos</small></div><button type="button" id="orangesThemeToggle" class="oranges-theme-toggle" aria-label="Ativar modo claro" title="Ativar modo claro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg><span class="theme-toggle-label">Modo claro</span></button></header><main><nav><button data-tab="importar" class="active">Importação</button><button data-tab="painel">Painel</button><button data-tab="produtividade">Produtividade</button><button data-tab="ticketsAis">Tickets AIS</button><button data-tab="limparTicketsAis">Limpar Tickets AIS</button><button data-tab="cadastro">Nova carga</button><button data-tab="historico">Histórico</button><button data-tab="config">Dados e backup</button><button data-tab="limpeza">Limpar programação</button></nav>
 <section id="painel" class="hidden"><h1>Painel operacional</h1><p class="muted">Acompanhe cada caminhão da chegada até a liberação.</p><div id="cards" class="cards"></div><div class="panel"><h2>Carregamentos</h2><div class="toolbar"><input id="busca" type="search" placeholder="Buscar placa, carga, pedido, cliente..."><select id="filtro"><option value="">Todos os status</option></select><button class="secondary" id="importarPainel">Importar arquivos</button><button class="warn" id="limparPainelNovo" type="button" title="Limpar cargas atuais e iniciar nova programação">Limpar painel / Nova programação</button></div><div id="lista" class="tablewrap"></div><div id="mobileAdminLoads" class="mobile-admin-loads" aria-live="polite"></div></div></section>
 <section id="produtividade" class="hidden">
 <div class="prod-heading"><div><h1>Dashboard de produtividade</h1><p class="muted">Indicadores calculados a partir da programação e do histórico dos carregamentos.</p></div>
