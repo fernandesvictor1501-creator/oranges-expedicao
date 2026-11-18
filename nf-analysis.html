@@ -53,8 +53,8 @@ html.nf-embedded body{background:var(--bg)!important}
 html.nf-embedded main>.card:first-child{margin-top:0}
 @media(max-width:650px){html.nf-embedded main{padding:9px!important}}
 </style><script>if(new URLSearchParams(location.search).has('embedded'))document.documentElement.classList.add('nf-embedded');</script><style id="nf-roles-ux">
-html.nf-admin #alerts,html.nf-admin main>section:not(:first-child),html.nf-admin main>#plc,html.nf-admin main>#kpis,html.nf-admin main>#tot{display:none!important}
-html.nf-admin main>section:first-child{display:block!important}
+html.nf-admin #alerts,html.nf-admin main>section:not(.nf-import-panel),html.nf-admin main>#plc,html.nf-admin main>#kpis,html.nf-admin main>#tot{display:none!important}
+html.nf-admin main>section.nf-import-panel{display:block!important}
 html.nf-admin #demo{display:none!important}
 html.nf-public main>section:first-child{display:none!important}
 html.nf-public #demo,html.nf-public #clr{display:none!important}
@@ -71,7 +71,7 @@ html.nf-admin main{min-height:300px}
 <h1>Controle de Notas Fiscais<small>Oranges Alimentos · Faturamento de Saída</small></h1></header>
 <main>
 <div class="nf-mode-label" role="status"></div>
-<section class="card noprint"><h2>1. Importar dados</h2>
+<section class="card noprint nf-import-panel"><h2>Importar notas fiscais</h2>
 <div class="drop" id="drop">Arraste aqui arquivos <b>PDF (DANFE), XML de NF-e, Excel (.xlsx/.xls) ou CSV</b> (relatórios do ERP Senior) ou
 <input type="file" id="fi" multiple accept=".pdf,.xml,.xlsx,.xls,.csv,.txt" style="width:auto;margin-left:6px"></div>
 <div class="row" style="margin-top:10px"><button class="s" id="demo">Carregar dados de demonstração</button><button class="s" id="clr">Limpar tudo</button><span id="msg" class="mut"></span></div>
@@ -260,6 +260,7 @@ r('2001',T,'Peça modelo A',120,'PC','ABC1D23','C21','',120);r('2001',T,'Big Bag
 r('2002',T,'Tanque 1000 L',5,'UN','','C22','',5);r('2003',T,'Peça modelo B',80,'PC','GHI7J89','C22','(C.C) Corrigida placa do veículo',80);
 r('2004',T,'Peça modelo A',90,'PC','JKL0M12','C23','',80);r('2005',T,'Produto sem tipo',7,'KG','NOP3Q45','C23','(C.C) Corrigida quantidade',null);
 r('2006',T,'Tanque 1000 L',2,'UN','QRS6T78','C24','',2);r('2007',T,'ENVOLTORIOS CONGELADOS DE BOVINO - BEXIGA - 59 - CAIXA',1180,'KG','TUV9W01','C24','',null);r('2008',T,'TRAQUEIA CONGELADA DE BOVINO - 38 - SACO',760,'KG','WXY2Z34','C24','',null);files.push('demo');fixQ();saveHist();setDates();render();await persistNF();msg('Dados de DEMONSTRAÇÃO compartilhados (fictícios).')};
+window.addEventListener('message',function(event){if(event.origin!==location.origin||event.data?.source!=='oranges-nf-refresh'||MODE!=='public')return;hydrateNF()});
 setDates();render();hydrateNF();
 </script><script>
 if(document.documentElement.classList.contains('nf-embedded')){
