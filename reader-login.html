@@ -67,7 +67,7 @@ input:focus{outline:2px solid #ab718c;outline-offset:1px;border-color:#713852}
 .install-url button{font-size:11px;padding:9px 11px;border:1px solid #8c4868;background:#fff0f7;color:#602044;border-radius:8px;flex:0 0 auto;cursor:pointer;font-weight:750}
 .install-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:14px}
 .install-step{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid #eae2e5;border-radius:11px;overflow:hidden}
-.install-shot{height:190px;background-color:#f2e9ea;background-image:url('/iphone-tutorial.svg');background-repeat:no-repeat;background-size:200% 200%}
+.install-shot{height:190px;background-color:#f2e9ea;background-image:url('/iphone-original-photos.svg');background-repeat:no-repeat;background-size:200% 200%}
 .install-shot-one{background-position:left top}
 .install-shot-two{background-position:right top}
 .install-shot-three{background-position:left bottom}
@@ -81,6 +81,11 @@ input:focus{outline:2px solid #ab718c;outline-offset:1px;border-color:#713852}
 .install-bottom small{font-size:10px;line-height:1.5;color:#66776d}
 @media(max-width:480px){.install-steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.install-shot{height:165px}.install-step-content{padding:9px}.install-step p{font-size:10px}}
 @media(max-width:350px){.install-steps{grid-template-columns:1fr}.install-shot{height:220px}}
+
+/* Fotos reais fornecidas pelo usuário: mantêm a proporção vertical do iPhone. */
+.install-shot{height:auto!important;aspect-ratio:100/217!important;background-color:#f4eff1;background-repeat:no-repeat!important;background-size:200% 200%!important}
+@media(max-width:480px){.install-shot{height:auto!important}}
+@media(max-width:350px){.install-shot{height:auto!important}}
 </style></head>
 <body><div class="login-shell">
 <aside class="brand-side" aria-label="Sistema Oranges">
