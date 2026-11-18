@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#49103D"><title>Entrar · Controle de Carregamento | Oranges</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#2a2529;background:#f6f1ec}*{box-sizing:border-box}
+body{margin:0;min-height:100svh;background:#f6f1ec;display:grid;place-items:center;padding:28px 18px}
+.login-shell{display:grid;grid-template-columns:1.08fr .94fr;width:min(1040px,100%);min-height:685px;border-radius:22px;overflow:hidden;box-shadow:0 22px 65px #3c20301c;background:#fff}
+.brand-side{position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:48px;background:linear-gradient(154deg,#3c0c33 0%,#49103d 52%,#763058 100%);color:#fff}
+.brand-side:before{content:"";position:absolute;width:290px;height:290px;right:-110px;top:-100px;border-radius:50%;background:radial-gradient(circle,#ffffff25 0%,transparent 68%)}
+.brand-inner{position:relative;z-index:1}
+.brand-mark{height:132px;width:148px;object-fit:contain;filter:brightness(0) invert(1) drop-shadow(0 0 20px #ffffff6a);margin-bottom:25px}
+.brand-greeting{font-size:16px;font-weight:750;margin:0 0 8px}
+.brand-inner h1{font-size:36px;line-height:1.1;letter-spacing:-.05em;margin:0 0 9px}
+.brand-sub{font-size:14px;color:#eddbeb;margin:0 0 27px}
+.features{padding:0;margin:0;display:grid;gap:15px;list-style:none}
+.features li{display:flex;align-items:center;gap:12px;font-size:14px}
+.check{border:1px solid #e8c8df8a;background:#ffffff29;display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;border-radius:50%;font-size:15px}
+.login-main{padding:39px 43px;display:flex;flex-direction:column;justify-content:center;gap:0}
+.logo-row{display:grid;justify-items:center;margin-bottom:24px}
+.logo-row img{width:64px;height:56px;object-fit:contain}
+.logo-row strong{font-size:22px;color:#833951;letter-spacing:.08em;font-weight:850;line-height:1}
+.logo-row small{font-size:8px;letter-spacing:.28em;color:#aa8b7a;margin-top:5px}
+.login-main h2{text-align:center;font-size:18px;letter-spacing:-.02em;margin:0 0 15px}
+.intro{text-align:center;color:#90868b;font-size:14px;margin:0 0 30px}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;height:50px;border:1px solid #d7c9c3;border-radius:10px;background:#fff;color:#242024;text-decoration:none;font-weight:650;font-size:14px;cursor:pointer}
+.google-btn:hover{background:#faf7f5;border-color:#a97d8f}
+.google-btn:disabled{opacity:.55;cursor:not-allowed}
+.google-g{font-size:24px;font-weight:850;font-family:Arial,sans-serif;background:conic-gradient(#4285f4 0 24%,#34a853 24% 50%,#fbbc05 50% 70%,#ea4335 70% 90%,#4285f4 90%);background-clip:text;color:transparent}
+.google-hint{text-align:center;font-size:12px;color:#8f8387;line-height:1.55;margin:17px 0 25px}
+.divider{display:flex;align-items:center;gap:10px;color:#96888c;font-size:12px;margin:0 0 24px}
+.divider:before,.divider:after{content:"";height:1px;background:#eadedb;flex:1}
+form{display:grid;gap:13px}
+label{display:block;font-size:13px;font-weight:620;color:#302a2b}
+input{display:block;margin-top:8px;width:100%;height:50px;padding:0 15px;border-radius:10px;border:1.5px solid #cec4c1;background:white;font:inherit;color:#2a2328}
+input:focus{outline:2px solid #ab718c;outline-offset:1px;border-color:#713852}
+.primary{height:51px;border:none;border-radius:10px;color:#fff;background:linear-gradient(100deg,#49103d,#853c55);font-size:15px;font-weight:750;cursor:pointer;margin-top:6px}
+.primary:hover{filter:brightness(1.08)}
+.primary:disabled{opacity:.5;cursor:wait}
+.switch{display:flex;justify-content:center;align-items:center;gap:7px;margin:20px 0 6px;font-size:13px;color:#7e7077;text-align:center}
+.switch button{border:0;background:none;color:#802b50;font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+#feedback{min-height:20px;font-size:12px;line-height:1.45;color:#a4324b;text-align:center;margin:10px 0}
+#feedback.good{color:#196849}
+.access-footer{margin-top:11px;text-align:center;font-size:12px;color:#978a8d}
+.access-footer a{color:#823550}
+[data-screen=register] .registration-hide{display:none}
+[data-screen=login] .registration-only{display:none}
+@media(max-width:760px){body{padding:12px;background:#fff}.login-shell{display:block;min-height:0;max-width:470px;box-shadow:none;border-radius:0}.brand-side{display:none}.login-main{padding:24px 18px 40px}.logo-row{margin-bottom:20px}.intro{margin-bottom:23px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style></head>
+<body><div class="login-shell">
+<aside class="brand-side" aria-label="Sistema Oranges">
+<div class="brand-inner">
+<img class="brand-mark" src="/oranges-symbol.svg" alt="">
+<p class="brand-greeting">Bem-vindo!</p><h1>Controle de<br>Carregamento</h1>
+<p class="brand-sub">Faturamento · Acompanhamento operacional</p>
+<ul class="features"><li><span class="check">✓</span> Carregamentos, da chegada à liberação</li><li><span class="check">✓</span> Tickets AIS, NF-e e romaneios</li><li><span class="check">✓</span> Produtividade, histórico e análise de NF</li></ul>
+</div></aside>
+<main class="login-main" id="main" data-screen="login">
+<div class="logo-row"><img src="/oranges-symbol.svg" alt=""><strong>ORANGES</strong><small>alimentos</small></div>
+<h2 id="screenTitle">Acesse sua conta</h2><p class="intro" id="screenSubtitle">Entre para continuar</p>
+<a class="google-btn" id="googleBtn" href="/auth/google"><span class="google-g" aria-hidden="true">G</span><span>Entrar com Google</span></a>
+<p class="google-hint" id="googleHint">Primeiro acesso? Entre com Google e solicite a aprovação do administrador.</p>
+<div class="divider">ou com e-mail e senha</div>
+<form id="readerForm" autocomplete="on">
+<div class="registration-only"><label for="fullName">Nome completo</label><input id="fullName" autocomplete="name" minlength="3" maxlength="130"></div>
+<label for="readerEmail">E-mail<input id="readerEmail" type="email" autocomplete="email" required maxlength="255" placeholder="nome@empresa.com"></label>
+<label for="readerPassword">Senha<input id="readerPassword" type="password" autocomplete="current-password" required minlength="10" placeholder="Digite sua senha"></label>
+<button class="primary" id="submit" type="submit">Entrar</button>
+</form>
+<div class="switch"><span id="switchPrompt">Primeiro acesso?</span><button id="switchMode" type="button">Criar uma conta</button></div>
+<p id="feedback" role="status" aria-live="polite"></p>
+<p class="access-footer">Contas novas precisam de aprovação. <a href="/login">Sou administrador</a></p>
+</main></div>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+let registration=false;
+function feedback(msg,good=false){$('feedback').textContent=msg;$('feedback').classList.toggle('good',good)}
+function screen(isRegister){
+ registration=isRegister;$('main').dataset.screen=isRegister?'register':'login';
+ $('screenTitle').textContent=isRegister?'Solicitar acesso':'Acesse sua conta';
+ $('screenSubtitle').textContent=isRegister?'Crie sua conta para solicitar aprovação':'Entre para continuar';
+ $('submit').textContent=isRegister?'Enviar solicitação':'Entrar';
+ $('switchPrompt').textContent=isRegister?'Já possui uma conta?':'Primeiro acesso?';
+ $('switchMode').textContent=isRegister?'Fazer login':'Criar uma conta';
+ $('readerPassword').autocomplete=isRegister?'new-password':'current-password';
+ $('readerPassword').minLength=isRegister?10:1;
+ $('fullName').required=isRegister;feedback('');
+}
+$('switchMode').addEventListener('click',()=>screen(!registration));
+$('readerForm').addEventListener('submit',async e=>{
+ e.preventDefault();const submit=$('submit');submit.disabled=true;feedback('Processando...');
+ const payload=registration?{name:$('fullName').value,email:$('readerEmail').value,password:$('readerPassword').value}:{email:$('readerEmail').value,password:$('readerPassword').value};
+ try{
+  const r=await fetch(registration?'/api/reader/register':'/api/reader/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data=await r.json();if(!r.ok)throw Error(data.error||'Não foi possível continuar');
+  if(registration){screen(false);feedback('Solicitação enviada. Aguarde a aprovação do administrador antes de entrar.',true);$('readerPassword').value=''}
+  else location.replace('/');
+ }catch(err){feedback(err.message)}
+ finally{submit.disabled=false}
+});
+(async()=>{
+ const params=new URLSearchParams(location.search);
+ if(params.get('status')==='pendente')feedback('Seu cadastro foi enviado. Aguarde a aprovação do administrador.',true);
+ else if(params.get('status')==='recusado')feedback('Seu acesso não foi aprovado. Procure o administrador.');
+ else if(params.get('erro'))feedback('Não foi possível entrar com Google. Confira a configuração ou tente com e-mail.');
+ try{const r=await fetch('/api/reader/config',{cache:'no-store'});const data=await r.json();if(!data.google_enabled){const b=$('googleBtn');b.removeAttribute('href');b.setAttribute('aria-disabled','true');b.style.opacity='.55';b.style.cursor='not-allowed';b.onclick=e=>e.preventDefault();$('googleHint').textContent='Entrada com Google ainda não configurada. Crie sua conta usando e-mail e senha.'}}
+ catch(e){$('googleHint').textContent='Não foi possível consultar o login Google. Utilize e-mail e senha.'}
+})();
+})();
+</script></body></html>
