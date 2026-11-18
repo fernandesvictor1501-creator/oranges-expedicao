@@ -40,7 +40,7 @@ app.get('/api/public',async(req,res)=>{try{
   placa:c.placa,carga:c.carga,pedido:c.pedido,cliente:c.cliente,produto:c.produto,
   quantidade:c.quantidade,transportadora:c.transportadora,motorista:c.motorista,
   cidade:c.cidade,frete:c.frete,status:c.status,atualizado:c.atualizado,
-  dataProgramacao:c.dataProgramacao||''
+  dataProgramacao:c.dataProgramacao||'',motivoNaoCarregou:c.motivoNaoCarregou||'',dataNaoCarregou:c.dataNaoCarregou||''
  });
  // Dados de cargas arquivadas continuam somente para consulta; não alteram as operações atuais.
  res.json({cargas:(d.cargas||[]).map(project),arquivadas:(d.cargasArquivadas||[]).map(project)});
