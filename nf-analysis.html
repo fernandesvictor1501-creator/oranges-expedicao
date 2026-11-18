@@ -196,14 +196,26 @@ function msg(t){$('#msg').textContent=t}
 function nfsOf(list){const m=new Map();list.forEach(it=>{const k=(it.serie||'')+'|'+(it.nf||'?');if(!m.has(k))m.set(k,{nf:it.nf||'(sem número)',serie:it.serie,data:'',placa:'',carga:'',obs:'',itens:[]});
 const n=m.get(k);if(!n.data&&it.data)n.data=it.data;if(!n.placa&&okPlaca(it.placa))n.placa=it.placa;if(!n.carga&&it.carga)n.carga=it.carga;
 if(it.obs&&!n.obs.includes(it.obs))n.obs+=(n.obs?' ':'')+it.obs;n.itens.push(it)});
-return[...m.values()].map(n=>{n.semPlaca=!n.placa;n.qErr=n.itens.filter(i=>i.ref!=null&&i.qtd!=null&&Math.abs(i.qtd-i.ref)>1e-6);
-n.cc=CCR.test(n.obs+' '+n.itens.map(i=>i.produto).join(' '));n.ccMarc=n.cc;n.tq=n.itens.filter(i=>cat(i)==='tanque').reduce((a,i)=>a+(i.qtd||0),0);n.tq2=n.tq===2;
-n.rs=[];if(n.ccMarc)n.rs.push('(C.C) na descrição');if(n.semPlaca)n.rs.push('sem placa');if(n.tq2)n.rs.push('2 tanques');
-n.cc=n.rs.length>0;n.pend=n.cc&&!n.ccMarc;n.mot=n.ccMarc?motivo(n.obs):(n.semPlaca?'Placa do veículo':(n.tq2?'Quantidade de tanques':''));
-n.err=n.semPlaca||n.qErr.length>0||n.cc;return n})}
+return[...m.values()].map(n=>{
+ // Uma placa não lida no PDF não significa que a NF-e esteja sem placa.
+ const pdfUnverified=n.itens.some(i=>i.pdf&&(i.plateCheck==='unverified'||!i.plateCheck));
+ n.placaIndefinida=!n.placa&&pdfUnverified;
+ n.semPlaca=!n.placa&&!n.placaIndefinida;
+ n.qErr=n.itens.filter(i=>i.ref!=null&&i.qtd!=null&&Math.abs(i.qtd-i.ref)>1e-6);
+ // C.C só é contabilizada quando houver marcação explícita na descrição.
+ // Falta de placa, quantidade ou dois tanques são indicadores distintos e não comprovam C.C.
+ n.ccMarc=CCR.test(n.obs+' '+n.itens.map(i=>i.produto).join(' '));
+ n.cc=n.ccMarc;
+ n.tq=n.itens.filter(i=>cat(i)==='tanque').reduce((a,i)=>a+(i.qtd||0),0);
+ n.tq2=n.tq===2;
+ n.rs=n.cc?['(C.C) na descrição']:[];
+ n.pend=false; // Não inferir necessidade de carta de correção sem revisão fiscal.
+ n.mot=n.cc?motivo(n.obs):'';
+ n.err=n.semPlaca||n.qErr.length>0;
+ return n})}
 function sum(list){const ns=nfsOf(list),c={peca:0,tanque:0,bag:0,caixa:0,saco:0,conf:0},pr={};
 ns.forEach(n=>n.itens.forEach(i=>{const k=cat(i);const q=i.qtd||0;c[k]+=q;const pk=k+'|'+(i.produto||'(sem descrição)');pr[pk]=pr[pk]||{k,p:i.produto||'(sem descrição)',un:i.un,q:0,kg:0,semQ:0};pr[pk].q+=q;pr[pk].kg+=(i.kg||0);if(i.qtd==null)pr[pk].semQ++}));
-return{ns,c,pr:Object.values(pr).sort((a,b)=>a.k.localeCompare(b.k)||b.q-a.q),sp:ns.filter(n=>n.semPlaca),qe:ns.filter(n=>n.qErr.length),cc:ns.filter(n=>n.cc),er:ns.filter(n=>n.err).length}}
+return{ns,c,pr:Object.values(pr).sort((a,b)=>a.k.localeCompare(b.k)||b.q-a.q),sp:ns.filter(n=>n.semPlaca),pu:ns.filter(n=>n.placaIndefinida),qe:ns.filter(n=>n.qErr.length),cc:ns.filter(n=>n.cc),er:ns.filter(n=>n.err).length}}
 function hsum(list){const s=sum(list);return{nfs:s.ns.length,pecas:s.c.peca,tanques:s.c.tanque,bags:s.c.bag,caixas:s.c.caixa,sacos:s.c.saco,sp:s.sp.length,qe:s.qe.length,cc:s.cc.length,pct:s.ns.length?s.er/s.ns.length*100:0}}
 function saveHist(){try{const h=JSON.parse(localStorage.getItem(HK)||'{}');[...new Set(items.map(i=>i.data).filter(Boolean))].forEach(d=>h[d]=hsum(items.filter(i=>i.data===d)));localStorage.setItem(HK,JSON.stringify(h))}catch(e){}}
 function getHist(){try{return JSON.parse(localStorage.getItem(HK)||'{}')}catch(e){return{}}}
@@ -218,15 +230,15 @@ function bars(o,mx,cls){return Object.entries(o).map(([k,v])=>'<div class="bar '
 function render(){let list=filt();const S=sum(list),n=S.ns.length,pct=n?S.er/n*100:0;
 const tipo=$('#fe').value;let vis=S.ns;if(tipo==='placa')vis=S.sp;else if(tipo==='qtd')vis=S.qe;else if(tipo==='cc')vis=S.cc;else if(tipo==='any')vis=S.ns.filter(x=>x.err);else if(tipo==='none')vis=S.ns.filter(x=>!x.err);
 const K=(l,v,c)=>'<div class="k '+(c||'')+'"><span>'+l+'</span><b>'+v+'</b></div>';
-$('#kpis').innerHTML=K('Notas emitidas',n)+K('Peças vendidas',fmt(S.c.peca))+K('Tanques vendidos',fmt(S.c.tanque))+K('Bags vendidos',fmt(S.c.bag))+K('Caixas vendidas',fmt(S.c.caixa))+K('Sacos vendidos',fmt(S.c.saco))+K('Notas sem placa',S.sp.length,'e')+K('Qtd. errada',S.qe.length,'e')+K('Notas com C.C',S.cc.length,'w')+K('C.C pendente',S.cc.filter(x=>x.pend).length,'e')+K('% notas com erro',pct.toFixed(1).replace('.',',')+'%',pct>0?'e':'');
+$('#kpis').innerHTML=K('Notas emitidas',n)+K('Peças vendidas',fmt(S.c.peca))+K('Tanques vendidos',fmt(S.c.tanque))+K('Bags vendidos',fmt(S.c.bag))+K('Caixas vendidas',fmt(S.c.caixa))+K('Sacos vendidos',fmt(S.c.saco))+K('Notas sem placa',S.sp.length,'e')+K('Qtd. errada',S.qe.length,'e')+K('Notas com C.C',S.cc.length,'w')+K('Placa a conferir',S.pu.length,'w')+K('% notas com erro',pct.toFixed(1).replace('.',',')+'%',pct>0?'e':'');
 const al=[];const nc=list.filter(i=>cat(i)==='conf').length,sq=list.filter(i=>i.qtd==null).length,sd=S.ns.filter(x=>!x.data).length,sr=list.filter(i=>i.ref==null).length;
-if(!items.length)al.push('Nenhum dado importado ainda.');const np=S.ns.filter(x=>x.itens.some(i=>i.pdf)).length;if(np)al.push(np+' nota(s) vieram de PDF: placa, data e C.C são lidos do texto, mas os itens e quantidades são reconhecidos em melhor esforço. Conferir contra o documento.');if(nc)al.push(nc+' item(ns) sem categoria identificada (peça, tanque ou bag): conferir. Ficam em “A conferir” e não entram nas outras categorias.');
+if(!items.length)al.push('Nenhum dado importado ainda.');if(S.pu.length)al.push(S.pu.length+' nota(s) com placa não identificada na leitura do PDF: confira o documento original ou importe o XML. Essas notas NÃO são contadas como sem placa.');const np=S.ns.filter(x=>x.itens.some(i=>i.pdf)).length;if(np)al.push(np+' nota(s) vieram de PDF: placa, data e C.C são lidos do texto, mas os itens e quantidades são reconhecidos em melhor esforço. Conferir contra o documento.');if(nc)al.push(nc+' item(ns) sem categoria identificada (peça, tanque ou bag): conferir. Ficam em “A conferir” e não entram nas outras categorias.');
 if(sq)al.push(sq+' item(ns) sem quantidade legível: conferir.');if(sd)al.push(sd+' nota(s) sem data de emissão.');
 if(items.length&&sr===list.length&&list.length)al.push('Nenhuma quantidade de referência encontrada: a divergência de quantidade só é apurada quando o arquivo traz a coluna “Quantidade correta”.');
 $('#alerts').innerHTML=al.map(a=>'<div class="al">⚠ '+esc(a)+'</div>').join('');
 $('#cats').innerHTML=bars({Peças:S.c.peca,Tanques:S.c.tanque,Bags:S.c.bag,Caixas:S.c.caixa,Sacos:S.c.saco,'A conferir':S.c.conf},Math.max(S.c.peca,S.c.tanque,S.c.bag,S.c.caixa,S.c.saco,S.c.conf));
 $('#tot').textContent='Total faturado: '+fmt(S.c.peca)+' peças · '+fmt(S.c.tanque)+' tanques · '+fmt(S.c.bag)+' bags · '+fmt(S.c.caixa)+' caixas · '+fmt(S.c.saco)+' sacos'+(S.c.conf?' · '+fmt(S.c.conf)+' a conferir':'')+' ('+list.length+' linhas de itens)';
-$('#errs').innerHTML=bars({'Sem placa':S.sp.length,'Quantidade errada':S.qe.length,'Com C.C':S.cc.length},n,'e')+'<div style="margin-top:8px"><b>'+S.er+'</b> nota(s) com algum erro de '+n+' ('+pct.toFixed(1).replace('.',',')+'%), contando cada NF uma só vez.</div>';
+$('#errs').innerHTML=bars({'Sem placa':S.sp.length,'Quantidade errada':S.qe.length,'Com C.C':S.cc.length,'Placa não identificada (conferir)':S.pu.length},n,'e')+'<div style="margin-top:8px"><b>'+S.er+'</b> nota(s) com erro confirmado de '+n+' ('+pct.toFixed(1).replace('.',',')+'%), contando cada NF uma só vez. Notas sem placa legível no PDF são tratadas como <b>conferir</b>, não como sem placa.</div>';
 $('#prods').innerHTML=tbl(['Categoria','Produto','Un.','Quantidade','Peso (kg)'],S.pr.map(p=>[CATN[p.k],esc(p.p),esc(p.un),fmt(p.q)+(p.semQ?' <span class="tag w">'+p.semQ+' sem qtd</span>':''),p.kg?fmt(p.kg):'—']));
 const L=x=>{
  const file=x.itens.find(i=>/^NF_DOC_[0-9]+_/.test(String(i.file||'')))?.file||'';
@@ -237,12 +249,12 @@ const L=x=>{
 $('#tp').innerHTML='<p><b>'+S.sp.length+'</b> nota(s).</p>'+tbl(['NF','Data','Carga','Produtos'],S.sp.map(x=>[L(x),fd(x.data),esc(x.carga)||'<span class="tag w">não informada</span>',esc(x.itens.map(i=>i.produto).join('; '))]));
 $('#tq').innerHTML='<p><b>'+S.qe.length+'</b> nota(s).</p>'+tbl(['NF','Produto','Qtd. faturada','Qtd. correta','Diferença'],S.qe.flatMap(x=>x.qErr.map(i=>[L(x),esc(i.produto),fmt(i.qtd),fmt(i.ref),fmt(i.qtd-i.ref)])));
 const by={};S.cc.forEach(x=>by[x.mot]=(by[x.mot]||0)+1);
-$('#tcs').innerHTML='<p><b>'+S.cc.length+'</b> nota(s) precisam de Carta de Correção, sendo <b>'+S.cc.filter(x=>x.pend).length+'</b> ainda sem (C.C) na descrição (pendentes). Regras: (C.C) na descrição · toda NF sem placa · NF com exatamente 2 tanques.</p>'+(S.cc.length?bars(by,S.cc.length,'e'):'');
+$('#tcs').innerHTML='<p><b>'+S.cc.length+'</b> nota(s) possuem a marcação <b>(C.C)</b> na descrição. Falta de placa e divergências de quantidade são analisadas separadamente. A necessidade de emitir uma CC-e deve ser confirmada pelo faturamento; o sistema não presume C.C apenas pelo erro.</p>'+(S.cc.length?bars(by,S.cc.length,'e'):'');
 $('#tc').innerHTML=tbl(['NF','Data','Motivo da exigência','Situação','Tipo de erro','Descrição da correção'],S.cc.map(x=>[L(x),fd(x.data),x.rs.map(r=>'<span class="tag w">'+r+'</span>').join(' '),x.pend?'<span class="tag e">pendente</span>':'<span class="tag o">com (C.C)</span>',esc(x.mot),esc(x.obs)||'<span class="tag w">sem descrição</span>']));
 const H=getHist(),cd=$('#fd').value;if(cd!=='*'&&items.length)H[cd]=hsum(items.filter(i=>i.data===cd));
 const ds=Object.keys(H).sort().reverse().slice(0,8);
 $('#hist').innerHTML=ds.length<2?'<span class="mut">Histórico insuficiente: importe outros dias para comparar.</span>':tbl(['Data','NFs','Peças','Tanques','Bags','Caixas','Sacos','Sem placa','Qtd. errada','C.C','% erro','NFs vs dia anterior'],ds.map((d,i)=>{const h=H[d],p=H[ds[i+1]],df=p?h.nfs-p.nfs:null;return[fd(d),h.nfs,fmt(h.pecas),fmt(h.tanques),fmt(h.bags),fmt(h.caixas),fmt(h.sacos),h.sp,h.qe,h.cc,h.pct.toFixed(1).replace('.',',')+'%',df==null?'–':(df>0?'▲ +':df<0?'▼ ':'= ')+df]}));
-$('#all').innerHTML=tbl(['NF','Data','Placa','Carga','Itens','Situação'],vis.map(x=>[L(x),fd(x.data),esc(x.placa)||'—',esc(x.carga)||'—',esc(x.itens.map(i=>(i.produto||'?')+' ('+fmt(i.qtd)+')').join('; ')),x.err?[x.semPlaca?'<span class="tag e">sem placa</span>':'',x.qErr.length?'<span class="tag e">qtd errada</span>':'',x.cc?'<span class="tag w">C.C</span>':''].join(' '):'<span class="tag o">ok</span>']));
+$('#all').innerHTML=tbl(['NF','Data','Placa','Carga','Itens','Situação'],vis.map(x=>[L(x),fd(x.data),esc(x.placa)||'—',esc(x.carga)||'—',esc(x.itens.map(i=>(i.produto||'?')+' ('+fmt(i.qtd)+')').join('; ')),(x.err||x.cc||x.placaIndefinida)?[x.semPlaca?'<span class="tag e">sem placa</span>':'',x.placaIndefinida?'<span class="tag w">placa a conferir</span>':'',x.qErr.length?'<span class="tag e">qtd errada</span>':'',x.cc?'<span class="tag o">com (C.C)</span>':''].join(' '):'<span class="tag o">ok</span>']));
 const sem=S.sp.length,com=n-sem,ps=n?sem/n*100:0,dd=Object.keys(H).sort().slice(-15),dm=Math.max(1,...dd.map(d=>H[d].nfs)),dco=dd.filter(d=>H[d].sp>0).length,tsp=dd.reduce((a,d)=>a+(H[d].sp||0),0),P=(l,v,c)=>'<div class="k '+(c||'')+'"><span>'+l+'</span><b>'+v+'</b></div>';
 $('#plc').innerHTML='<h2>Controle de placa: notas emitidas com e sem placa</h2><div class="kpis">'+P('Notas COM placa',com,'o')+P('Notas SEM placa',sem,sem?'e':'o')+P('% sem placa',ps.toFixed(1).replace('.',',')+'%',ps>0?'e':'o')+(dd.length?P('Dias com nota sem placa',dco+' de '+dd.length,dco?'e':'o'):'')+'</div>'
 +(dco>=2&&dco/dd.length>=0.5?'<div class="al" style="margin-top:10px;border-left-color:var(--er)">⚠ Erro recorrente: houve nota sem placa em <b>'+dco+' de '+dd.length+'</b> dias analisados ('+tsp+' notas no total).</div>':'')
@@ -255,7 +267,7 @@ const t=['RELATÓRIO DIÁRIO DE FATURAMENTO DE SAÍDA – '+(d==='*'?'todas as d
 '2. PRODUTOS POR CATEGORIA',...S.pr.map(p=>'['+CATN[p.k]+'] '+p.p+': '+fmt(p.q)),'',
 '3. NOTAS SEM PLACA ('+S.sp.length+')',...S.sp.map(x=>'NF '+l(x)+(x.carga?' – carga '+x.carga:' – carga não informada')),'',
 '4. DIVERGÊNCIA DE QUANTIDADE ('+S.qe.length+')',...S.qe.flatMap(x=>x.qErr.map(i=>'NF '+l(x)+' – '+i.produto+': faturado '+fmt(i.qtd)+', correto '+fmt(i.ref))),'',
-'5. CARTAS DE CORREÇÃO (C.C) ('+S.cc.length+', pendentes: '+S.cc.filter(x=>x.pend).length+')',...S.cc.map(x=>'NF '+l(x)+' – '+x.rs.join(' + ')+(x.pend?' – PENDENTE':' – com (C.C)')+' – '+x.mot+(x.obs?' – '+x.obs:'')),'',
+'5. NOTAS COM MARCAÇÃO (C.C) ('+S.cc.length+')',...S.cc.map(x=>'NF '+l(x)+' – '+x.rs.join(' + ')+(x.cc?' – com (C.C)':'')+' – '+x.mot+(x.obs?' – '+x.obs:'')),'',
 '6. TOTALIZADOR DE ERROS','Sem placa: '+S.sp.length+' | Qtd. errada: '+S.qe.length+' | C.C: '+S.cc.length,'Notas com erro: '+S.er+' de '+S.ns.length+' ('+window._pct.toFixed(1).replace('.',',')+'%)'];
 const r=$('#rt');r.style.display='block';r.value=t.join('\n');r.select();try{document.execCommand('copy');msg('Relatório copiado.')}catch(e){}};
 ['fd','fn','fp','fc','fg','fe'].forEach(i=>$('#'+i).addEventListener(i==='fd'||i==='fc'||i==='fe'?'change':'input',render));
