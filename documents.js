@@ -2,6 +2,7 @@
 const path=require('path');
 const plate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const load=v=>String(v||'').trim();
+const {analyze}=require('./nf-document-analyzer');
 module.exports=function(app,adminAuth,pool,ready){
  const ensure=Promise.resolve(ready).then(()=>pool.query("CREATE TABLE IF NOT EXISTS load_documents (id BIGSERIAL PRIMARY KEY, kind TEXT NOT NULL, format TEXT NOT NULL, plate TEXT NOT NULL, load_number TEXT NOT NULL, filename TEXT NOT NULL, mime TEXT NOT NULL, file_bytes BYTEA NOT NULL, uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now(), CONSTRAINT doc_kind CHECK (kind IN ('nfe','romaneio')), CONSTRAINT doc_format CHECK (format IN ('pdf','xml')))")).then(()=>pool.query("CREATE INDEX IF NOT EXISTS load_docs_by_load ON load_documents (plate,load_number)"));
  async function knownLoads(){
@@ -31,7 +32,36 @@ module.exports=function(app,adminAuth,pool,ready){
    if(!exists(cargas,p,l))return res.status(404).json({error:'Carga não encontrada. Cadastre ou importe a carga antes de anexar o documento.'});
    const mime=format==='pdf'?'application/pdf':'application/xml';
    const q=await pool.query('INSERT INTO load_documents(kind,format,plate,load_number,filename,mime,file_bytes) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',[kind,format,p,l,filename,mime,bytes]);
-   res.status(201).json({ok:true,id:q.rows[0].id});
+   const id=Number(q.rows[0].id);
+   let analysis={status:'not_applicable',count:0};
+   if(kind==='nfe'){
+    const parsed=await analyze(bytes,format,filename,p,l);
+    if(parsed.items.length){
+     const fileKey='NF_DOC_'+id+'_'+filename;
+     const items=parsed.items.map(item=>({...item,file:fileKey}));
+     let client;
+     try{
+      client=await pool.connect();
+      await client.query('BEGIN');
+      const state=await client.query("SELECT items,files FROM nf_analysis_state WHERE id=1 FOR UPDATE");
+      if(!state.rows.length)throw new Error('Análise ainda não foi inicializada');
+      const oldItems=Array.isArray(state.rows[0].items)?state.rows[0].items:[];
+      const oldFiles=Array.isArray(state.rows[0].files)?state.rows[0].files:[];
+      const mergedItems=[...oldItems.filter(it=>it.file!==fileKey),...items];
+      const mergedFiles=[...new Set([...oldFiles,fileKey])];
+      await client.query("UPDATE nf_analysis_state SET items=$1::jsonb,files=$2::jsonb,updated_at=now() WHERE id=1",[JSON.stringify(mergedItems),JSON.stringify(mergedFiles)]);
+      await client.query('COMMIT');
+      analysis={status:'imported',count:items.length,nf:parsed.nf||null};
+     }catch(e){
+      if(client)await client.query('ROLLBACK').catch(()=>{});
+      console.error('NF analysis sync failed:',e.message);
+      analysis={status:'failed',count:0,reason:'NF-e anexada, mas a análise não foi atualizada. Reimporte ou confira a análise.'};
+     }finally{if(client)client.release()}
+    }else{
+     analysis={status:'review',count:0,reason:parsed.reason||'NF-e anexada; conteúdo não reconhecido para análise.'};
+    }
+   }
+   res.status(201).json({ok:true,id,analysis});
   }catch(e){console.error('Document upload:',e.message);res.status(503).json({error:'Não foi possível armazenar o documento'})}
  });
  app.get('/api/documents/summary',async(req,res)=>{
@@ -53,7 +83,22 @@ module.exports=function(app,adminAuth,pool,ready){
  });
  app.delete('/api/documents/:id',adminAuth,async(req,res)=>{
   const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<1)return res.status(400).json({error:'ID inválido'});
-  try{await ensure;const q=await pool.query('DELETE FROM load_documents WHERE id=$1 RETURNING id',[id]);if(!q.rowCount)return res.status(404).json({error:'Documento não encontrado'});res.json({ok:true})}
-  catch(e){res.status(503).json({error:'Não foi possível excluir o documento'})}
+  let client;
+  try{
+   await ensure;client=await pool.connect();await client.query('BEGIN');
+   const q=await client.query('DELETE FROM load_documents WHERE id=$1 RETURNING id,kind,filename',[id]);
+   if(!q.rowCount){await client.query('ROLLBACK');return res.status(404).json({error:'Documento não encontrado'})}
+   if(q.rows[0].kind==='nfe'){
+    const fileKey='NF_DOC_'+id+'_'+q.rows[0].filename;
+    const state=await client.query('SELECT items,files FROM nf_analysis_state WHERE id=1 FOR UPDATE');
+    if(state.rows.length){
+     const oldItems=Array.isArray(state.rows[0].items)?state.rows[0].items:[];
+     const oldFiles=Array.isArray(state.rows[0].files)?state.rows[0].files:[];
+     await client.query("UPDATE nf_analysis_state SET items=$1::jsonb,files=$2::jsonb,updated_at=now() WHERE id=1",[JSON.stringify(oldItems.filter(x=>x.file!==fileKey)),JSON.stringify(oldFiles.filter(x=>x!==fileKey))]);
+    }
+   }
+   await client.query('COMMIT');res.json({ok:true});
+  }
+  catch(e){if(client)await client.query('ROLLBACK').catch(()=>{});console.error('document delete',e.message);res.status(503).json({error:'Não foi possível excluir o documento'})}finally{if(client)client.release()}
  });
 };
