@@ -75,6 +75,7 @@ app.get('/sw.js',(req,res)=>res.type('application/javascript').set('Service-Work
 app.get('/public-productivity.js',(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'public-productivity.js')));
 app.get('/documents-public.js',(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'documents-public.js')));
 app.get('/documents-admin.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'documents-admin.js')));
+app.get('/reader-approvals.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'reader-approvals.js')));
 app.get('/reading-ui.js',(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'reading-ui.js')));
 app.get('/productivity.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'productivity.js')));
 app.get('/ais-clean.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'ais-clean.js')));
