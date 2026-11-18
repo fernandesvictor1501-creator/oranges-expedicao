@@ -1,12 +1,12 @@
 {
   "name": "Controle de Carregamento - Faturamento | Oranges",
   "short_name": "Oranges Cargas",
-  "description": "Acompanhamento de carregamentos da Oranges Alimentos",
+  "description": "Painel de carregamentos da Oranges com abertura rápida em acessos posteriores e atualização automática ao conectar",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#1D0A19",
+  "background_color": "#F7F3EE",
   "theme_color": "#49103D",
   "lang": "pt-BR",
   "icons": [
