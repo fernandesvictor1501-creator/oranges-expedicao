@@ -149,7 +149,7 @@ if(typeof v==='number'&&v>30000&&v<70000)return new Date(Math.round((v-25569)*86
 const s=String(v||'').trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);
 if(m){let y=m[3].length==2?'20'+m[3]:m[3];return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')}return ''}
 const fd=d=>d?d.split('-').reverse().join('/'):'sem data';
-const okPlaca=p=>{p=String(p||'').trim();return !!p&&!/^(sem|-+$|n\/?a$|null|0+$)/i.test(p)};
+const okPlaca=p=>{const value=String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,'');return /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(value)};
 const CCR=/\(\s*C\.?\s*C\.?\s*\)/i;
 function cat(it){const t=norm(it.produto+' '+it.un);const raw=(it.produto+' '+it.un).toLowerCase();
 if(/tanque|\btq\b|\bibc\b/.test(raw))return'tanque';if(/\bbags?\b|big ?bag/.test(raw))return'bag';if(/caix|\bcx\b/.test(raw))return'caixa';if(/\bsacos?\b|\bsc\b/.test(raw))return'saco';
@@ -200,11 +200,12 @@ return[...m.values()].map(n=>{
  // Uma placa não lida no PDF não significa que a NF-e esteja sem placa.
  const pdfUnverified=n.itens.some(i=>i.pdf&&(i.plateCheck==='unverified'||!i.plateCheck));
  n.placaIndefinida=!n.placa&&pdfUnverified;
+ n.placa=String(n.placa||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
  n.semPlaca=!n.placa&&!n.placaIndefinida;
  n.qErr=n.itens.filter(i=>i.ref!=null&&i.qtd!=null&&Math.abs(i.qtd-i.ref)>1e-6);
  // C.C só é contabilizada quando houver marcação explícita na descrição.
  // Falta de placa, quantidade ou dois tanques são indicadores distintos e não comprovam C.C.
- n.ccMarc=CCR.test(n.obs+' '+n.itens.map(i=>i.produto).join(' '));
+ n.ccMarc=CCR.test(n.obs);
  n.cc=n.ccMarc;
  n.tq=n.itens.filter(i=>cat(i)==='tanque').reduce((a,i)=>a+(i.qtd||0),0);
  n.tq2=n.tq===2;
