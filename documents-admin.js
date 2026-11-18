@@ -9,7 +9,7 @@ async function refresh(){
  const {documents=[]}=await r.json();
  $('orangesDocsCount').textContent=documents.length+' arquivo(s) vinculados';
  box.innerHTML=documents.length?'<div class="oranges-docs-list">'+documents.map(d=>
- '<article class="oranges-doc-entry"><div><strong>'+(d.kind==='nfe'?'NF-e':'Romaneio')+' · '+d.format.toUpperCase()+'</strong><small>'+esc(d.plate)+' · Carga '+esc(d.load_number)+' · '+esc(d.filename)+' · '+esc(fmt(d.uploaded_at))+'</small></div><div class="oranges-doc-actions"><a href="/api/documents/file/'+Number(d.id)+'" target="_blank" rel="noopener noreferrer" download="'+esc(d.format==='xml'?'documento.xml':undefined)+'">Exportar '+d.format.toUpperCase()+'</a><button type="button" class="secondary" data-remove-doc="'+Number(d.id)+'">Excluir</button></div></article>'
+ '<article class="oranges-doc-entry"><div><strong>'+(d.kind==='nfe'?'NF-e':'Romaneio')+' · '+d.format.toUpperCase()+'</strong><small>'+esc(d.plate)+' · Carga '+esc(d.load_number)+' · '+esc(d.filename)+' · '+esc(fmt(d.uploaded_at))+'</small></div><div class="oranges-doc-actions"><a href="/api/documents/file/'+Number(d.id)+'" target="_blank" rel="noopener noreferrer" download="'+esc(d.filename)+'">Exportar '+d.format.toUpperCase()+'</a><button type="button" class="secondary" data-remove-doc="'+Number(d.id)+'">Excluir</button></div></article>'
  ).join('')+'</div>':'<div class="oranges-doc-empty">Nenhuma NF-e ou romaneio anexado.</div>';
  box.querySelectorAll('[data-remove-doc]').forEach(b=>b.addEventListener('click',async()=>{
   if(!confirm('Excluir este documento armazenado? Esta ação não exclui a carga.'))return;
