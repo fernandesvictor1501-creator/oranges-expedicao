@@ -23,7 +23,20 @@ app.use(session({name:'oranges.sid',secret:process.env.SESSION_SECRET||crypto.ra
 app.use((req,res,next)=>{res.set('Cache-Control','no-store');next()});
 const aut=(req,res,next)=>{if(req.session?.admin)return next();return res.status(401).json({error:'Não autorizado'})};const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 app.post('/api/login',(req,res)=>{const u=String(req.body?.username||'');const p=String(req.body?.password||'');const expected=process.env.ADMIN_PASSWORD||'';if(!expected)return res.status(503).json({error:'Administrador não configurado'});const ok=u===(process.env.ADMIN_USER||'victor.fernandes')&&crypto.timingSafeEqual(crypto.createHash('sha256').update(p).digest(),crypto.createHash('sha256').update(expected).digest());if(!ok)return res.status(401).json({error:'Credenciais inválidas'});req.session.regenerate(err=>{if(err)return res.status(500).json({error:'Erro de sessão'});req.session.admin=true;res.json({ok:true})})});
-app.get('/api/public',async(req,res)=>{try{await ready;const q=await pool.query('SELECT dados FROM app_state WHERE id=1');const d=q.rows[0].dados;res.json({cargas:(d.cargas||[]).map(c=>({placa:c.placa,carga:c.carga,pedido:c.pedido,cliente:c.cliente,produto:c.produto,quantidade:c.quantidade,transportadora:c.transportadora,motorista:c.motorista,cidade:c.cidade,frete:c.frete,status:c.status,atualizado:c.atualizado}))})}catch(e){console.error(e);res.status(503).json({error:'Banco indisponível'})}});
+app.get('/api/public',async(req,res)=>{try{
+ await ready;
+ const q=await pool.query('SELECT dados FROM app_state WHERE id=1');
+ const d=q.rows[0].dados||{};
+ const project=c=>({
+  placa:c.placa,carga:c.carga,pedido:c.pedido,cliente:c.cliente,produto:c.produto,
+  quantidade:c.quantidade,transportadora:c.transportadora,motorista:c.motorista,
+  cidade:c.cidade,frete:c.frete,status:c.status,atualizado:c.atualizado,
+  dataProgramacao:c.dataProgramacao||''
+ });
+ // Dados de cargas arquivadas continuam somente para consulta; não alteram as operações atuais.
+ res.json({cargas:(d.cargas||[]).map(project),arquivadas:(d.cargasArquivadas||[]).map(project)});
+ }catch(e){console.error(e);res.status(503).json({error:'Banco indisponível'})}
+});
 // Histórico público limitado ao cálculo de duração das etapas. Dados de usuários e observações não são divulgados.
 app.get('/api/public/productivity',async(req,res)=>{
  try{
