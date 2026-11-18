@@ -83,7 +83,7 @@ app.get('/auth/google/callback',async(req,res)=>{
   if(!infoResponse.ok)throw Error('userinfo');const info=await infoResponse.json();
   if(info.email_verified!==true||!info.sub||!info.email)throw Error('unverified email');
   const mail=email(info.email),sub=String(info.sub),name=String(info.name||mail.split('@')[0]).slice(0,130);
-  const q=await pool.query('INSERT INTO reader_accounts(full_name,email,google_sub,sector,permissions) VALUES($1,$2,$3,'Outros','[]'::jsonb) ON CONFLICT(email) DO UPDATE SET google_sub=COALESCE(reader_accounts.google_sub, EXCLUDED.google_sub) RETURNING id,full_name,email,status,google_sub,sector,permissions',[name,mail,sub]);
+  const q=await pool.query('INSERT INTO reader_accounts(full_name,email,google_sub,sector,permissions) VALUES($1,$2,$3,\'Outros\',\'[]\'::jsonb) ON CONFLICT(email) DO UPDATE SET google_sub=COALESCE(reader_accounts.google_sub, EXCLUDED.google_sub) RETURNING id,full_name,email,status,google_sub,sector,permissions',[name,mail,sub]);
   const u=q.rows[0];if(u.google_sub!==sub)throw Error('different Google identity');
   if(u.status==='pending')return res.redirect('/acesso?status=pendente');
   if(u.status!=='approved')return res.redirect('/acesso?status=recusado');
