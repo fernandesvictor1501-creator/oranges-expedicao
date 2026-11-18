@@ -587,7 +587,7 @@ html[data-oranges-theme="dark"] .oranges-icon-6{background:#195941!important;col
 <section id="painel" class="hidden"><h1>Painel operacional</h1><p class="muted">Acompanhe cada caminhão da chegada até a liberação.</p><div id="cards" class="cards"></div><div class="panel"><h2>Carregamentos</h2><div class="toolbar"><input id="busca" type="search" placeholder="Buscar placa, carga, pedido, cliente..."><select id="filtro"><option value="">Todos os status</option></select><button class="secondary" id="importarPainel">Importar arquivos</button><button class="warn" id="limparPainelNovo" type="button" title="Limpar cargas atuais e iniciar nova programação">Limpar painel / Nova programação</button></div><div id="lista" class="tablewrap"></div><div id="mobileAdminLoads" class="mobile-admin-loads" aria-live="polite"></div></div></section>
 <section id="produtividade" class="hidden">
 <div class="prod-heading"><div><h1>Dashboard de produtividade</h1><p class="muted">Indicadores calculados a partir da programação e do histórico dos carregamentos.</p></div>
-<label class="prod-scope">Período <select id="prodScope"><option value="current">Programação atual</option><option value="today">Cadastrados hoje</option></select></label></div>
+<label class="prod-scope">Período <select id="prodScope"><option value="today" selected>Hoje</option><option value="current">Todas as programações</option></select></label></div>
 <div id="prodSummary" class="prod-summary" aria-live="polite"></div>
 <div class="prod-columns">
 <article class="panel prod-panel"><h2>Distribuição por situação</h2><p class="hint">Veículos em cada etapa</p><div id="prodStatusBars"></div></article>
