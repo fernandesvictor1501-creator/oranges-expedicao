@@ -812,4 +812,12 @@ document.querySelectorAll('#adminMoreOptions button').forEach(b=>b.onclick=()=>{
 document.querySelectorAll('main>nav button').forEach(b=>b.addEventListener('click',setActive));
 setActive();
 })();
-</script><script src="/productivity.js" defer></script><script src="/ais-panel.js" defer></script><script src="/ais-upload.js" defer></script><script src="/ais-clean.js" defer></script><script src="/documents-admin.js" defer></script></body></html>
+</script><script src="/productivity.js" defer></script><script src="/ais-panel.js" defer></script><script src="/ais-upload.js" defer></script><script src="/ais-clean.js" defer></script><script src="/documents-admin.js" defer></script><script id="nf-frame-resize">
+window.addEventListener('message',function(event){
+ if(event.origin!==window.location.origin||event.data?.source!=='oranges-nf-analysis')return;
+ const frame=document.getElementById('nfAnalysisFrame');
+ if(!frame||event.source!==frame.contentWindow)return;
+ const height=Number(event.data.height);
+ if(Number.isFinite(height))frame.style.height=Math.min(12000,Math.max(700,height+14))+'px';
+});
+</script></body></html>
