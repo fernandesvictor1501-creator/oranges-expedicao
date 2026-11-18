@@ -69,6 +69,7 @@ app.get('/health',async(req,res)=>{try{await ready;await pool.query('SELECT 1');
 app.get('/manifest.webmanifest',(req,res)=>res.type('application/manifest+json').sendFile(path.join(__dirname,'manifest.webmanifest')));
 app.get('/barra-mansa-symbol.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(__dirname,'barra-mansa-symbol.svg')));
 app.get('/oranges-symbol.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(__dirname,'oranges-symbol.svg')));
+app.get('/iphone-tutorial.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(__dirname,'iphone-tutorial.svg')));
 app.get('/app-icon.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(__dirname,'app-icon.svg')));
 app.get('/app-icon.png',(req,res)=>{const html=require('fs').readFileSync(path.join(__dirname,'admin.html'),'utf8');const m=html.match(/<link rel="icon" type="image\/png" href="data:image\/png;base64,([A-Za-z0-9+/=]+)"/);if(!m)return res.status(404).end();res.type('png').send(Buffer.from(m[1],'base64'))});
 app.get('/sw.js',(req,res)=>res.type('application/javascript').set('Service-Worker-Allowed','/').sendFile(path.join(__dirname,'sw.js')));
