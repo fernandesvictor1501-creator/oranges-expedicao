@@ -28,7 +28,7 @@ const allow=readerAuth.readerCapability;
 const getReaderPermissions=readerAuth.getPermissions;
 app.use((req,res,next)=>{
  const pathname=req.path;
- if(pathname==='/api/public')return readerGate(req,res,()=>allow('dashboard')(req,res,next));
+ if(pathname==='/api/public')return readerGate(req,res,next);
  if(pathname==='/api/public/productivity')return readerGate(req,res,()=>allow('produtividade')(req,res,next));
  if(pathname==='/api/ais/summary'||pathname.startsWith('/api/ais/file/'))return readerGate(req,res,()=>allow('tickets')(req,res,next));
  if(pathname==='/api/documents/summary'||pathname.startsWith('/api/documents/file/'))return readerGate(req,res,()=>allow('documentos')(req,res,next));
@@ -47,7 +47,8 @@ app.get('/api/public',async(req,res)=>{try{
   dataProgramacao:c.dataProgramacao||'',motivoNaoCarregou:c.motivoNaoCarregou||'',dataNaoCarregou:c.dataNaoCarregou||''
  });
  // Dados de cargas arquivadas continuam somente para consulta; não alteram as operações atuais.
- res.json({cargas:(d.cargas||[]).map(project),arquivadas:(await getReaderPermissions(req)).includes('anteriores')?(d.cargasArquivadas||[]).map(project):[]});
+ const permissions=await getReaderPermissions(req);
+ res.json({cargas:(permissions.includes('dashboard')||permissions.includes('anteriores'))?(d.cargas||[]).map(project):[],arquivadas:permissions.includes('anteriores')?(d.cargasArquivadas||[]).map(project):[]});
  }catch(e){console.error(e);res.status(503).json({error:'Banco indisponível'})}
 });
 // Histórico público limitado ao cálculo de duração das etapas. Dados de usuários e observações não são divulgados.
