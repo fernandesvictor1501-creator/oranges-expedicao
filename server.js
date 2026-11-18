@@ -70,4 +70,5 @@ app.get('/ais-clean.js',aut,(req,res)=>res.type('application/javascript').sendFi
 app.get('/ais-upload.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'ais-upload.js')));
 app.get('/ais-panel.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'ais-panel.js')));
 require('./ais')(app,aut);
+require('./documents')(app,aut,pool,ready);
 app.get('/login',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));app.get('/admin',aut,(req,res)=>res.sendFile(path.join(__dirname,'admin.html')));app.get('/',(req,res)=>res.sendFile(path.join(__dirname,'public.html')));app.get('*',(req,res)=>res.redirect('/'));const port=process.env.PORT||3000;app.listen(port,'0.0.0.0',()=>console.log('Oranges pronto na porta '+port));
