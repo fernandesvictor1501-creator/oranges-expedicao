@@ -25,7 +25,7 @@ function drawLoadDocuments(){
   let section=foot.querySelector('.rv-load-doc-links');if(section)section.remove();
   const found=match({placa:plate,carga:load});if(!found.length)return;
   section=document.createElement('span');section.className='rv-load-doc-links';
-  section.innerHTML=found.slice(0,6).map(d=>fileLink(d,(d.kind==='nfe'?'NF-e':'Romaneio')+' '+d.format.toUpperCase())).join('');
+  section.innerHTML=found.slice(0,8).map(d=>fileLink(d,d.kind==='nfe'?(d.format==='pdf'?'↗ Ver NF-e · PDF':'↓ Baixar NF-e · XML'):(d.format==='pdf'?'↗ Ver romaneio · PDF':'↓ Baixar romaneio · XML'))).join('');
   foot.appendChild(section);
  });
 }
