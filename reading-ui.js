@@ -72,7 +72,13 @@ function drawTicketCentral(){
  $('rvTicketCount').textContent=filteredTickets.length+' ticket(s) vinculado(s)';
  $('rvTicketList').innerHTML=filteredTickets.length?filteredTickets.map(t=>'<article class="rv-ticket-card"><div class="rv-ticket-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4zM12 7v10" /></svg></div><div class="rv-ticket-description"><span>Ticket AIS</span><strong>'+esc(t.ticket_number||'Não identificado')+'</strong><small>Placa '+esc(t.linked_plate)+' · Carga '+esc(t.linked_load)+' · '+esc(t.truck?.cliente||'')+'</small></div><div class="rv-ticket-card-action">'+(t.file_available?'<a class="rv-ticket-link" href="/api/ais/file/'+Number(t.id)+'" target="_blank" rel="noopener noreferrer">↗ Abrir '+(t.file_type==='xml'?'XML':'PDF')+'</a>':'<span class="rv-ticket-unavailable">Documento original indisponível</span>')+'</div></article>').join(''):'<div class="rv-empty">Nenhum ticket vinculado corresponde à busca. Quando o arquivo original estiver disponível, o botão de consulta aparecerá aqui.</div>';
 }
+const accessPerms=Array.isArray(window.ORANGES_PERMISSIONS)?window.ORANGES_PERMISSIONS:['dashboard','tickets','documentos','analiseNF','produtividade','anteriores'];
+const canAccess=name=>accessPerms.includes(name);
+document.querySelectorAll('[data-rv-tab]').forEach(btn=>{
+ if(!canAccess(btn.dataset.rvTab)){btn.hidden=true;btn.style.display='none'}
+});
 function openTab(name){
+ if(!canAccess(name))return;
  const ticketsTab=name==='tickets',prodTab=name==='produtividade',pastTab=name==='anteriores',docsTab=name==='documentos',nfTab=name==='analiseNF';
  $('rvDashboardTab').hidden=ticketsTab||prodTab||pastTab||docsTab||nfTab;
  $('rvTicketCentral').hidden=!ticketsTab;
@@ -133,5 +139,5 @@ $('rvTicketSearch').addEventListener('input',drawTicketCentral);
 $('rvPreviousDate').addEventListener('change',()=>{dayOnScreen=$('rvPreviousDate').value;drawHistory()});
 refreshTickets();setInterval(()=>{if(!document.hidden)refreshTickets()},15000);
 if($('connection').classList.contains('ok'))lastSuccess=new Date();
-openTab('dashboard');draw();
+openTab(['dashboard','tickets','documentos','analiseNF','produtividade','anteriores'].find(canAccess)||'dashboard');draw();
 })();
