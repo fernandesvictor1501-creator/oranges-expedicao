@@ -24,11 +24,15 @@ app.use((req,res,next)=>{res.set('Cache-Control','no-store');next()});
 const aut=(req,res,next)=>{if(req.session?.admin)return next();return res.status(401).json({error:'Não autorizado'})};const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const readerAuth=require('./reader-auth')(app,pool,ready,aut);
 const readerGate=readerAuth.readerGate;
+const allow=readerAuth.readerCapability;
+const getReaderPermissions=readerAuth.getPermissions;
 app.use((req,res,next)=>{
  const pathname=req.path;
- if(pathname==='/api/public'||pathname==='/api/public/productivity'||pathname==='/api/ais/summary'||pathname.startsWith('/api/ais/file/')||pathname==='/api/documents/summary'||pathname.startsWith('/api/documents/file/')||(pathname==='/api/nf-analysis'&&req.method==='GET')){
-  return readerGate(req,res,next);
- }
+ if(pathname==='/api/public')return readerGate(req,res,()=>allow('dashboard')(req,res,next));
+ if(pathname==='/api/public/productivity')return readerGate(req,res,()=>allow('produtividade')(req,res,next));
+ if(pathname==='/api/ais/summary'||pathname.startsWith('/api/ais/file/'))return readerGate(req,res,()=>allow('tickets')(req,res,next));
+ if(pathname==='/api/documents/summary'||pathname.startsWith('/api/documents/file/'))return readerGate(req,res,()=>allow('documentos')(req,res,next));
+ if(pathname==='/api/nf-analysis'&&req.method==='GET')return readerGate(req,res,()=>allow('analiseNF')(req,res,next));
  return next();
 });
 app.post('/api/login',(req,res)=>{const u=String(req.body?.username||'');const p=String(req.body?.password||'');const expected=process.env.ADMIN_PASSWORD||'';if(!expected)return res.status(503).json({error:'Administrador não configurado'});const ok=u===(process.env.ADMIN_USER||'victor.fernandes')&&crypto.timingSafeEqual(crypto.createHash('sha256').update(p).digest(),crypto.createHash('sha256').update(expected).digest());if(!ok)return res.status(401).json({error:'Credenciais inválidas'});req.session.regenerate(err=>{if(err)return res.status(500).json({error:'Erro de sessão'});req.session.admin=true;res.json({ok:true})})});
@@ -43,7 +47,7 @@ app.get('/api/public',async(req,res)=>{try{
   dataProgramacao:c.dataProgramacao||'',motivoNaoCarregou:c.motivoNaoCarregou||'',dataNaoCarregou:c.dataNaoCarregou||''
  });
  // Dados de cargas arquivadas continuam somente para consulta; não alteram as operações atuais.
- res.json({cargas:(d.cargas||[]).map(project),arquivadas:(d.cargasArquivadas||[]).map(project)});
+ res.json({cargas:(d.cargas||[]).map(project),arquivadas:(await getReaderPermissions(req)).includes('anteriores')?(d.cargasArquivadas||[]).map(project):[]});
  }catch(e){console.error(e);res.status(503).json({error:'Banco indisponível'})}
 });
 // Histórico público limitado ao cálculo de duração das etapas. Dados de usuários e observações não são divulgados.
@@ -89,5 +93,5 @@ require('./ais')(app,aut);
 require('./documents')(app,aut,pool,ready);
 require('./plate-editor')(app,aut,pool,ready);
 require('./nf-data')(app,aut,pool,ready);
-app.get('/nf-analysis',readerGate,(req,res)=>res.sendFile(path.join(__dirname,'nf-analysis.html')));
-app.get('/acesso',(req,res)=>res.sendFile(path.join(__dirname,'reader-login.html')));app.get('/login',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));app.get('/admin',(req,res)=>{if(!req.session?.admin)return res.redirect('/login');res.sendFile(path.join(__dirname,'admin.html'))});app.get('/',(req,res)=>{if(!req.session?.readerId&&!req.session?.admin)return res.redirect('/acesso');readerGate(req,res,()=>res.sendFile(path.join(__dirname,'public.html')))});app.get('*',(req,res)=>res.redirect('/'));const port=process.env.PORT||3000;app.listen(port,'0.0.0.0',()=>console.log('Oranges pronto na porta '+port));
+app.get('/nf-analysis',readerGate,allow('analiseNF'),(req,res)=>res.sendFile(path.join(__dirname,'nf-analysis.html')));
+app.get('/acesso',(req,res)=>res.sendFile(path.join(__dirname,'reader-login.html')));app.get('/login',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));app.get('/admin',(req,res)=>{if(!req.session?.admin)return res.redirect('/login');res.sendFile(path.join(__dirname,'admin.html'))});app.get('/',(req,res)=>{if(!req.session?.readerId&&!req.session?.admin)return res.redirect('/acesso');readerGate(req,res,async()=>{try{const perms=await getReaderPermissions(req);const html=require('fs').readFileSync(path.join(__dirname,'public.html'),'utf8');const script='<script>window.ORANGES_PERMISSIONS='+JSON.stringify(perms)+';</script>';res.type('html').send(html.replace('</head>',script+'</head>'))}catch(e){console.error('Reader home',e.message);res.status(503).send('Painel indisponível')}})});app.get('*',(req,res)=>res.redirect('/'));const port=process.env.PORT||3000;app.listen(port,'0.0.0.0',()=>console.log('Oranges pronto na porta '+port));
