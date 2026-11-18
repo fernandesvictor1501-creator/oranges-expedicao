@@ -3,6 +3,35 @@
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 if(!$('orangesDocsAdmin'))return;
 const fmt=d=>new Date(d).toLocaleString('pt-BR');
+const plate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+let cargas=[];
+async function listCargas(){
+ try{
+  const r=await fetch('/api/state',{cache:'no-store',credentials:'same-origin'});
+  if(!r.ok)throw new Error('Não foi possível consultar as cargas');
+  const data=await r.json();
+  cargas=[...(Array.isArray(data.cargas)?data.cargas:[]),...(Array.isArray(data.cargasArquivadas)?data.cargasArquivadas:[])];
+  const select=$('orangesDocsCargo'),current=select.value;
+  select.innerHTML='<option value="">Escolha uma carga pela placa ou número...</option>';
+  for(const c of cargas){
+   const option=document.createElement('option');option.value=String(c.id);
+   option.textContent='Carga '+(c.carga||'—')+' · '+(c.placa||'Sem placa')+' · '+(c.cliente||'Cliente não identificado');
+   select.appendChild(option);
+  }
+  if(cargas.some(c=>String(c.id)===current))select.value=current;
+ }catch(e){$('orangesDocsFeedback').textContent='Não foi possível carregar as cargas automaticamente. Informe a placa e o número da carga.'}
+}
+$('orangesDocsCargo').addEventListener('change',()=>{
+ const c=cargas.find(x=>String(x.id)===$('orangesDocsCargo').value);
+ if(c){$('orangesDocsPlate').value=String(c.placa||'');$('orangesDocsLoad').value=String(c.carga||'')}
+});
+$('orangesDocsPlate').addEventListener('change',()=>{
+ const matches=cargas.filter(c=>plate(c.placa)===plate($('orangesDocsPlate').value));
+ if(matches.length===1){$('orangesDocsCargo').value=String(matches[0].id);$('orangesDocsLoad').value=String(matches[0].carga||'')}
+});
+const updateButton=()=>{$('orangesDocsUpload').textContent=$('orangesDocsType').value==='nfe'?'Importar NF-e':'Importar romaneio'};
+$('orangesDocsType').addEventListener('change',updateButton);
+
 async function refresh(){
  const box=$('orangesDocsList');box.innerHTML='<p class="muted">Consultando documentos…</p>';
  try{const r=await fetch('/api/documents/summary',{cache:'no-store'});if(!r.ok)throw Error('Falha ao consultar documentos');
@@ -31,12 +60,17 @@ $('orangesDocsUpload').addEventListener('click',async()=>{
  const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');reader.onerror=()=>reject(new Error('Não foi possível ler o arquivo'));reader.readAsDataURL(file)});
  const r=await fetch('/api/documents/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:$('orangesDocsType').value,format,plate,load_number:load,filename:file.name,file_base64:b64})});
  const result=await r.json();if(!r.ok)throw Error(result.error||'Falha ao salvar documento');
- $('orangesDocsFeedback').textContent='Documento armazenado e vinculado à carga com sucesso.';
+ const outcome=result.analysis;
+ $('orangesDocsFeedback').textContent=outcome?.status==='imported'
+  ?'NF-e importada na carga e na Análise de NF ('+outcome.count+' item(ns) reconhecido(s)). O botão Ver NF-e já está disponível no cartão do veículo.'
+  :outcome?.status==='review'||outcome?.status==='failed'
+  ?'Documento vinculado à carga e disponível no cartão. Atenção: '+(outcome.reason||'A análise automática requer conferência.')
+  :'Romaneio armazenado e vinculado ao carregamento. O botão Ver romaneio está disponível no cartão.';
  $('orangesDocsFile').value='';refresh();
  }catch(e){$('orangesDocsFeedback').textContent=e.message}
- finally{btn.disabled=false;btn.textContent='Anexar documento'}
+ finally{btn.disabled=false;updateButton()}
 });
-$('orangesDocsRefresh').addEventListener('click',refresh);
-document.querySelector('main>nav button[data-tab="documentos"]')?.addEventListener('click',refresh);
-refresh();
+$('orangesDocsRefresh').addEventListener('click',()=>{refresh();listCargas()});
+document.querySelector('main>nav button[data-tab="documentos"]')?.addEventListener('click',()=>{refresh();listCargas()});
+updateButton();listCargas();refresh();
 })();
