@@ -2,6 +2,27 @@
 const normalize=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const plateValid=p=>/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(p);
 module.exports=function(app,adminAuth,pool,ready){
+ app.post('/api/admin/plate/delete',adminAuth,async(req,res)=>{
+ const id=String(req.body?.id||''),plate=normalize(req.body?.plate);if(!id||!plateValid(plate))return res.status(400).json({error:'Carga ou placa inválida'});
+ let c,committed=false;
+ try{
+  await ready;c=await pool.connect();await c.query('BEGIN');
+  const q=await c.query('SELECT dados FROM app_state WHERE id=1 FOR UPDATE'),state=q.rows[0]?.dados;
+  const cargo=state?.cargas?.find(x=>String(x.id)===id);
+  if(!cargo)throw Object.assign(Error('Carga não encontrada'),{status:404});
+  if(normalize(cargo.placa)!==plate)throw Object.assign(Error('A placa foi alterada; atualize a lista'),{status:409});
+  const load=String(cargo.carga||'').trim();if(!load)throw Object.assign(Error('Número da carga ausente'),{status:400});
+  if([...(state.cargas||[]),...(state.cargasArquivadas||[])].some(x=>String(x.id)!==id&&normalize(x.placa)===plate&&String(x.carga||'').trim()===load))throw Object.assign(Error('Carga e placa duplicadas; revisão necessária'),{status:409});
+  const time=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+  cargo.placa='';cargo.atualizado=time;
+  state.historico=Array.isArray(state.historico)?state.historico:[];
+  state.historico.unshift({data:time,placa:plate,carga:load,antes:'Placa '+plate,depois:'Sem placa',origem:'Exclusão de placa — Administrador'});
+  await c.query('UPDATE app_state SET dados=$1::jsonb WHERE id=1',[JSON.stringify(state)]);
+  const tickets=await c.query("UPDATE ais_tickets SET linked_plate=NULL,linked_load=NULL,match_status='review',review_reason='Placa removida; revisar vínculo' WHERE linked_plate=$1 AND linked_load=$2 AND match_status='linked'",[plate,load]);
+  await c.query('COMMIT');committed=true;res.json({ok:true,unlinked_tickets:tickets.rowCount});
+ }catch(e){if(c&&!committed)await c.query('ROLLBACK').catch(()=>{});res.status(e.status||503).json({error:e.status?e.message:'Falha ao remover placa; dados preservados'})}
+ finally{if(c)c.release()}
+ });
  app.post('/api/admin/plate/change',adminAuth,async(req,res)=>{
   const id=String(req.body?.id||'').trim();
   const newPlate=normalize(req.body?.new_plate);
