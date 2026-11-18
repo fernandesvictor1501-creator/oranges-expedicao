@@ -14,7 +14,7 @@ const fromXml=(buf,filename,plate,load)=>{
  const nf=tag(xml,'nNF');
  if(!nf)return {items:[],reason:'XML sem número de NF-e (nNF)'};
  const ide=tag(xml,'ide')||xml,transport=tag(xml,'transp')||xml;
- const base={file:filename,nf,serie:tag(ide,'serie'),data:day(tag(ide,'dhEmi')||tag(ide,'dEmi')),placa:pnorm(tag(transport,'placa')),carga:load,obs:tag(xml,'infCpl'),ref:null};
+ const base={file:filename,nf,serie:tag(ide,'serie'),data:day(tag(ide,'dhEmi')||tag(ide,'dEmi')),placa:pnorm(tag(transport,'placa')),plateCheck:pnorm(tag(transport,'placa'))?'found':'xml_missing',carga:load,obs:tag(xml,'infCpl'),ref:null};
  const nodes=parts(xml,'det');
  const items=nodes.map(node=>{const product=tag(node,'prod')||node;return {...base,produto:tag(product,'xProd')||'(produto não identificado)',qtd:number(tag(product,'qCom')),un:tag(product,'uCom')}});
  return {items:items.length?items:[{...base,produto:'(sem itens detalhados no XML)',qtd:null,un:''}],reason:null,nf};
@@ -45,10 +45,17 @@ const fromPdf=async(buf,filename,plate,load)=>{
   const serie=g(/S[ÉE]RIE\s*:?\s*(\d{1,3})/i),data=g(/EMISS[ÃA]O\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i)||g(/(\d{2}\/\d{2}\/\d{4})/);
   const ti=t.search(/TRANSPORTADOR/i),pi=t.search(/DADOS DOS PRODUTOS|DADOS DO PRODUTO/i);
   const block=ti>=0?t.slice(ti,pi>ti?pi:ti+600):'';
-  const foundPlate=(block.match(/\b[A-Z]{3}-?\d[A-Z0-9]\d{2}\b/)||[''])[0];
+  // A DANFE frequentemente quebra a placa com espaços entre caracteres.
+  // Pesquisar próximo ao campo PLACA, não confundir com CNPJ/código de produto.
+  const platePattern='[A-Z]{3}[\\s-]*\\d[\\s-]*[A-Z0-9][\\s-]*\\d[\\s-]*\\d';
+  const labelMatch=block.match(new RegExp('PLACA(?:\\s+DO\\s+VE[ÍI]CULO)?\\s*:?\\s*('+platePattern+')','i'))
+     ||t.match(new RegExp('PLACA(?:\\s+DO\\s+VE[ÍI]CULO)?\\s*:?\\s*('+platePattern+')','i'));
+  const nearby=block.match(new RegExp('\\b('+platePattern+')\\b','i'));
+  const foundPlate=pnorm(labelMatch?.[1]||nearby?.[1]||'');
+  const validPlate=/^[A-Z]{3}\d[A-Z0-9]\d{2}$/.test(foundPlate);
   const oi=t.search(/INFORMA[ÇC][ÕO]ES COMPLEMENTARES|DADOS ADICIONAIS/i);
   const obs=oi>=0?t.slice(oi).replace(/RESERVADO AO FISCO.*/i,'').slice(0,2000):'';
-  const base={file:filename,nf:doc.nf,serie,data,placa:pnorm(foundPlate),carga:load,obs,ref:null,pdf:true};
+  const base={file:filename,nf:doc.nf,serie,data,placa:validPlate?foundPlate:'',plateCheck:validPlate?'found':'unverified',carga:load,obs,ref:null,pdf:true};
   const chunk=pi>=0?t.slice(pi):'',re=/\s(\d{8})\s+(\d{3,4})\s+(\d{4})\s+([A-Za-z]{1,4})\s+([\d.]+,\d{1,4})\s/g;
   let match,prev=0,count=0;
   while((match=re.exec(chunk))){
