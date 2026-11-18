@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);if(!$('rvProductivity'))return;
-const STEPS=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado'];
-const COLORS=['#8994a3','#4187bf','#9b77c6','#b788a9','#cca15a','#40aa78'];
+const STEPS=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou'];
+const COLORS=['#8994a3','#4187bf','#9b77c6','#b788a9','#cca15a','#40aa78','#b93c60'];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let cached={cargas:[],historico:[]};let hasData=false;let updatedAt=0;let fetching=false;
 function parseDate(value){
