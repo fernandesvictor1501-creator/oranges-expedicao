@@ -46,6 +46,41 @@ input:focus{outline:2px solid #ab718c;outline-offset:1px;border-color:#713852}
 [data-screen=login] .registration-only{display:none}
 @media(max-width:760px){body{padding:12px;background:#fff}.login-shell{display:block;min-height:0;max-width:470px;box-shadow:none;border-radius:0}.brand-side{display:none}.login-main{padding:24px 18px 40px}.logo-row{margin-bottom:20px}.intro{margin-bottom:23px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style><style id="oranges-install-guide-css">
+.install-guide{border:1px solid #e8d9df;border-radius:13px;background:#fff9fb;margin:13px 0 5px;color:#402539;overflow:hidden;box-shadow:0 2px 11px #3d1a340a}
+.install-guide>summary{display:flex;align-items:center;gap:11px;cursor:pointer;list-style:none;padding:13px;text-align:left;user-select:none;min-height:67px}
+.install-guide>summary::-webkit-details-marker{display:none}
+.install-guide[open]>summary{border-bottom:1px solid #eadde3}
+.install-icon{display:grid;place-items:center;background:#f4e6ed;color:#7d3354;border-radius:10px;width:38px;height:38px;flex:0 0 38px}
+.install-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.install-summary-text{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.install-summary-text strong{font-size:12px;color:#49103d}
+.install-summary-text small{font-size:11px;color:#867581}
+.guide-chevron{width:18px;height:18px;stroke:#946e82;stroke-width:1.8;fill:none;transition:transform .2s}
+.install-guide[open] .guide-chevron{transform:rotate(180deg)}
+.install-body{padding:14px 13px 16px}
+.install-intro{font-size:12px;line-height:1.55;color:#6b5661;margin:0 0 13px}
+.install-url{display:flex;justify-content:space-between;align-items:center;gap:9px;background:#fff;border:1px solid #e5d1db;border-radius:9px;padding:10px}
+.install-url>span{display:flex;flex-direction:column;gap:5px;min-width:0}
+.install-url small{font-size:9px;font-weight:800;letter-spacing:.07em;color:#806b76}
+.install-url a{font-size:11px;color:#7b3254;word-break:break-word;text-decoration:underline;text-underline-offset:2px}
+.install-url button{font-size:11px;padding:9px 11px;border:1px solid #8c4868;background:#fff0f7;color:#602044;border-radius:8px;flex:0 0 auto;cursor:pointer;font-weight:750}
+.install-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:14px}
+.install-step{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid #eae2e5;border-radius:11px;overflow:hidden}
+.install-shot{height:190px;background-color:#f2e9ea;background-image:url('/iphone-tutorial.svg');background-repeat:no-repeat;background-size:200% 200%}
+.install-shot-one{background-position:left top}
+.install-shot-two{background-position:right top}
+.install-shot-three{background-position:left bottom}
+.install-shot-four{background-position:right bottom}
+.install-step-content{padding:10px 10px 12px}
+.install-step-num{display:inline-grid;place-items:center;font-size:10px;background:#f2e3eb;color:#802c56;width:28px;height:22px;border-radius:6px;font-weight:850}
+.install-step h3{color:#441d36;font-size:12px;margin:7px 0 5px;line-height:1.3}
+.install-step p{font-size:11px;color:#766774;line-height:1.45;margin:0}
+.install-bottom{display:flex;flex-direction:column;gap:8px;margin-top:13px;padding:12px;border-radius:9px;background:#f2f8f4}
+.install-bottom span{font-size:11px;color:#256240;font-weight:800}
+.install-bottom small{font-size:10px;line-height:1.5;color:#66776d}
+@media(max-width:480px){.install-steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.install-shot{height:165px}.install-step-content{padding:9px}.install-step p{font-size:10px}}
+@media(max-width:350px){.install-steps{grid-template-columns:1fr}.install-shot{height:220px}}
 </style></head>
 <body><div class="login-shell">
 <aside class="brand-side" aria-label="Sistema Oranges">
@@ -69,7 +104,20 @@ input:focus{outline:2px solid #ab718c;outline-offset:1px;border-color:#713852}
 </form>
 <div class="switch"><span id="switchPrompt">Primeiro acesso?</span><button id="switchMode" type="button">Criar uma conta</button></div>
 <p id="feedback" role="status" aria-live="polite"></p>
-<p class="access-footer">Contas novas precisam de aprovação. <a href="/login">Sou administrador</a></p>
+<details class="install-guide" id="installGuide">
+<summary><span class="install-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10 18h4M12 6v9m-3-3 3 3 3-3"/></svg></span><span class="install-summary-text"><strong>Instalar o aplicativo no celular</strong><small>Veja como adicionar à tela de início</small></span><svg class="guide-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+<div class="install-body">
+<p class="install-intro">Siga estas etapas no <b>iPhone</b> para abrir o Controle de Carregamento como aplicativo, com o ícone da Oranges.</p>
+<div class="install-url"><span><small>LINK DO SISTEMA</small><a href="https://oranges-expedicao-online.onrender.com/acesso" target="_blank" rel="noopener noreferrer">oranges-expedicao-online.onrender.com</a></span><button type="button" id="copyInstallUrl" aria-label="Copiar link do sistema">Copiar</button></div>
+<div class="install-steps">
+<article class="install-step"><div class="install-shot install-shot-one" role="img" aria-label="Captura enviada: tela do sistema Oranges aberta no navegador do iPhone"></div><div class="install-step-content"><span class="install-step-num">01</span><h3>Abra o link no Safari</h3><p>Se receber o endereço pelo WhatsApp, toque no link e use <b>Abrir no Safari</b> quando necessário.</p></div></article>
+<article class="install-step"><div class="install-shot install-shot-two" role="img" aria-label="Captura enviada: menu do navegador com opção Compartilhar"></div><div class="install-step-content"><span class="install-step-num">02</span><h3>Toque em Compartilhar</h3><p>No Safari, abra o menu da página e toque em <b>Compartilhar</b>.</p></div></article>
+<article class="install-step"><div class="install-shot install-shot-three" role="img" aria-label="Captura enviada: opção Adicionar à Tela de Início no compartilhamento do iPhone"></div><div class="install-step-content"><span class="install-step-num">03</span><h3>Adicione à Tela de Início</h3><p>Na lista de opções, selecione <b>Adicionar à Tela de Início</b>.</p></div></article>
+<article class="install-step"><div class="install-shot install-shot-four" role="img" aria-label="Captura enviada: nome Oranges Cargas e opção Abrir como app web"></div><div class="install-step-content"><span class="install-step-num">04</span><h3>Confirme a instalação</h3><p>Deixe o nome <b>Oranges Cargas</b>, mantenha <b>Abrir como app web</b> ativado e toque em <b>Adicionar</b>.</p></div></article>
+</div>
+<div class="install-bottom"><span>✓ O ícone da Oranges aparecerá na tela de início.</span><small>Para Android: no Chrome, use o menu ⋮ → Instalar app ou Adicionar à tela inicial.</small></div>
+</div></details>
+<p class="access-footer">Novos cadastros precisam de aprovação para acessar o painel.</p>
 </main></div>
 <script>
 (function(){
@@ -109,4 +157,10 @@ $('readerForm').addEventListener('submit',async e=>{
  catch(e){$('googleHint').textContent='Não foi possível consultar o login Google. Utilize e-mail e senha.'}
 })();
 })();
+</script><script id="oranges-install-url-copy">
+document.getElementById('copyInstallUrl')?.addEventListener('click',async function(){
+const url='https://oranges-expedicao-online.onrender.com/acesso';
+try{await navigator.clipboard.writeText(url);this.textContent='Copiado ✓'}catch(e){window.prompt('Copie o endereço do sistema:',url);this.textContent='Copiar'}
+setTimeout(()=>{this.textContent='Copiar'},2200)
+});
 </script></body></html>
