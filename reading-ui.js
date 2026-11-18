@@ -17,7 +17,27 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const normPlate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 let tickets=[],mode='cards',sort='updated';
 let lastSuccess=null;
-const all=()=>Array.isArray(cargas)?cargas:[];
+const localDay=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
+const normalizeDay=v=>{let s=String(v||'').trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);return m?m[3]+'-'+m[2]+'-'+m[1]:''};
+const dayFor=c=>normalizeDay(c.dataProgramacao)||normalizeDay(c.atualizado);
+const allRecords=()=>[...(Array.isArray(cargas)?cargas:[]),...(Array.isArray(window.orangesArchivedLoads)?window.orangesArchivedLoads:[])];
+const all=()=>Array.isArray(cargas)?cargas.filter(c=>dayFor(c)===localDay()):[];
+const historical=()=>allRecords().filter(c=>dayFor(c)&&dayFor(c)!==localDay());
+const dateLabel=day=>{let v=String(day||'').split('-');return v.length===3?v[2]+'/'+v[1]+'/'+v[0]:'—'};
+let dayOnScreen=localDay();
+function drawHistory(){
+ const date=$('rvPreviousDate'),container=$('rvPreviousCards'),summary=$('rvPreviousCount');if(!date||!container)return;
+ const dates=[...new Set(historical().map(dayFor))].sort().reverse();
+ const oldValue=date.value;
+ date.innerHTML=dates.length?dates.map(d=>'<option value="'+d+'">'+dateLabel(d)+'</option>').join(''):'<option value="">Nenhuma data anterior</option>';
+ if(dates.includes(oldValue))date.value=oldValue;
+ else if(dates.includes(dayOnScreen))date.value=dayOnScreen;
+ const selected=date.value,rows=historical().filter(c=>dayFor(c)===selected).sort((a,b)=>String(b.atualizado||'').localeCompare(String(a.atualizado||'')));
+ dayOnScreen=selected||localDay();
+ summary.textContent=rows.length+' carregamento(s) em '+(selected?dateLabel(selected):'datas anteriores');
+ container.innerHTML=rows.length?rows.map(card).join(''):'<div class="rv-empty">Nenhum lançamento registrado nesta data.</div>';
+}
+
 const key=c=>normPlate(c.placa)+'|'+String(c.carga||'').trim();
 function ticketFor(c){
  const matches=tickets.filter(t=>normPlate(t.linked_plate)===normPlate(c.placa)&&String(t.linked_load||'').trim()===String(c.carga||'').trim());
@@ -45,18 +65,20 @@ function card(c){
 function drawTicketCentral(){
  const input=$('rvTicketSearch');if(!input)return;
  const q=normPlate(input.value);
- const available=tickets.map(t=>({...t,truck:all().find(c=>normPlate(c.placa)===normPlate(t.linked_plate)&&String(c.carga||'')===String(t.linked_load||''))})).filter(t=>t.truck);
+ const available=tickets.map(t=>({...t,truck:allRecords().find(c=>normPlate(c.placa)===normPlate(t.linked_plate)&&String(c.carga||'')===String(t.linked_load||''))})).filter(t=>t.truck);
  const filteredTickets=available.filter(t=>!q||[t.ticket_number,t.linked_plate,t.linked_load,t.truck?.cliente].some(v=>normPlate(v).includes(q)));
  $('rvTicketCount').textContent=filteredTickets.length+' ticket(s) vinculado(s)';
  $('rvTicketList').innerHTML=filteredTickets.length?filteredTickets.map(t=>'<article class="rv-ticket-card"><div class="rv-ticket-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4zM12 7v10" /></svg></div><div class="rv-ticket-description"><span>Ticket AIS</span><strong>'+esc(t.ticket_number||'Não identificado')+'</strong><small>Placa '+esc(t.linked_plate)+' · Carga '+esc(t.linked_load)+' · '+esc(t.truck?.cliente||'')+'</small></div><div class="rv-ticket-card-action">'+(t.file_available?'<a class="rv-ticket-link" href="/api/ais/file/'+Number(t.id)+'" target="_blank" rel="noopener noreferrer">↗ Abrir '+(t.file_type==='xml'?'XML':'PDF')+'</a>':'<span class="rv-ticket-unavailable">Documento original indisponível</span>')+'</div></article>').join(''):'<div class="rv-empty">Nenhum ticket vinculado corresponde à busca. Quando o arquivo original estiver disponível, o botão de consulta aparecerá aqui.</div>';
 }
 function openTab(name){
- const ticketsTab=name==='tickets',prodTab=name==='produtividade';
- $('rvDashboardTab').hidden=ticketsTab||prodTab;
+ const ticketsTab=name==='tickets',prodTab=name==='produtividade',pastTab=name==='anteriores';
+ $('rvDashboardTab').hidden=ticketsTab||prodTab||pastTab;
  $('rvTicketCentral').hidden=!ticketsTab;
  $('rvProductivity').hidden=!prodTab;
+ $('rvPreviousLoads').hidden=!pastTab;
  document.querySelectorAll('[data-rv-tab]').forEach(btn=>{const selected=btn.dataset.rvTab===name;btn.classList.toggle('active',selected);btn.setAttribute('aria-selected',String(selected))});
  if(ticketsTab)drawTicketCentral();
+ if(pastTab)drawHistory();
 }
 function stats(){
  const count=all().length;
@@ -75,6 +97,7 @@ function stats(){
 }
 function draw(){
  stats();
+ if($('rvPreviousLoads')&&!$('rvPreviousLoads').hidden)drawHistory();
  const rows=filtered();const count=rows.length;
  $('readingCount').textContent=count+' carga'+(count===1?'':'s')+' encontrada'+(count===1?'':'s');
  $('readingCards').innerHTML=count?rows.map(card).join(''):'<div class="rv-empty">Nenhum carregamento encontrado. Altere a busca ou os filtros.</div>';
@@ -102,6 +125,7 @@ carregar=async function(){await originalCarregar();if($('connection').classList.
 async function refreshTickets(){try{const r=await fetch('/api/ais/summary',{cache:'no-store'});if(r.ok){const json=await r.json();tickets=Array.isArray(json.tickets)?json.tickets:[];draw();drawTicketCentral()}}catch(e){}}
 document.querySelectorAll('[data-rv-tab]').forEach(b=>b.addEventListener('click',()=>openTab(b.dataset.rvTab)));
 $('rvTicketSearch').addEventListener('input',drawTicketCentral);
+$('rvPreviousDate').addEventListener('change',()=>{dayOnScreen=$('rvPreviousDate').value;drawHistory()});
 refreshTickets();setInterval(()=>{if(!document.hidden)refreshTickets()},15000);
 if($('connection').classList.contains('ok'))lastSuccess=new Date();
 openTab('dashboard');draw();
