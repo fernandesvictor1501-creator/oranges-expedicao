@@ -26,7 +26,20 @@ module.exports=function(app,auth,pool,ready){
    });
    const list=files.map(f=>String(f).slice(0,160));
    await ensure;
-   const saved=await pool.query('UPDATE nf_analysis_state SET items=$1::jsonb,files=$2::jsonb,updated_at=now() WHERE id=1 RETURNING updated_at',[JSON.stringify(cleaned),JSON.stringify(list)]);
+   // A importação manual não pode apagar NF-e automaticamente vinculadas às cargas.
+   const client=await pool.connect();let saved;
+   try{
+    await client.query('BEGIN');
+    const previous=await client.query('SELECT items,files FROM nf_analysis_state WHERE id=1 FOR UPDATE');
+    const current=previous.rows[0]||{items:[],files:[]};
+    const autoItems=(Array.isArray(current.items)?current.items:[]).filter(x=>String(x.file||'').startsWith('NF_DOC_'));
+    const autoFiles=(Array.isArray(current.files)?current.files:[]).filter(x=>String(x).startsWith('NF_DOC_'));
+    const manual=cleaned.filter(x=>!String(x.file||'').startsWith('NF_DOC_'));
+    const selected=[...manual,...autoItems];
+    const allFiles=[...new Set([...list.filter(x=>!String(x).startsWith('NF_DOC_')),...autoFiles])];
+    saved=await client.query('UPDATE nf_analysis_state SET items=$1::jsonb,files=$2::jsonb,updated_at=now() WHERE id=1 RETURNING updated_at',[JSON.stringify(selected),JSON.stringify(allFiles)]);
+    await client.query('COMMIT');
+   }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e}finally{client.release()}
    res.json({ok:true,count:cleaned.length,updated_at:saved.rows[0].updated_at});
   }catch(e){
    if(e.message==='Item inválido')return res.status(400).json({error:'Dados inválidos'});
