@@ -14,7 +14,7 @@ const fromXml=(buf,filename,plate,load)=>{
  const nf=tag(xml,'nNF');
  if(!nf)return {items:[],reason:'XML sem número de NF-e (nNF)'};
  const ide=tag(xml,'ide')||xml,transport=tag(xml,'transp')||xml;
- const base={file:filename,nf,serie:tag(ide,'serie'),data:day(tag(ide,'dhEmi')||tag(ide,'dEmi')),placa:pnorm(tag(transport,'placa')||plate),carga:load,obs:tag(xml,'infCpl'),ref:null};
+ const base={file:filename,nf,serie:tag(ide,'serie'),data:day(tag(ide,'dhEmi')||tag(ide,'dEmi')),placa:pnorm(tag(transport,'placa')),carga:load,obs:tag(xml,'infCpl'),ref:null};
  const nodes=parts(xml,'det');
  const items=nodes.map(node=>{const product=tag(node,'prod')||node;return {...base,produto:tag(product,'xProd')||'(produto não identificado)',qtd:number(tag(product,'qCom')),un:tag(product,'uCom')}});
  return {items:items.length?items:[{...base,produto:'(sem itens detalhados no XML)',qtd:null,un:''}],reason:null,nf};
@@ -48,7 +48,7 @@ const fromPdf=async(buf,filename,plate,load)=>{
   const foundPlate=(block.match(/\b[A-Z]{3}-?\d[A-Z0-9]\d{2}\b/)||[''])[0];
   const oi=t.search(/INFORMA[ÇC][ÕO]ES COMPLEMENTARES|DADOS ADICIONAIS/i);
   const obs=oi>=0?t.slice(oi).replace(/RESERVADO AO FISCO.*/i,'').slice(0,2000):'';
-  const base={file:filename,nf:doc.nf,serie,data,placa:pnorm(foundPlate||plate),carga:load,obs,ref:null,pdf:true};
+  const base={file:filename,nf:doc.nf,serie,data,placa:pnorm(foundPlate),carga:load,obs,ref:null,pdf:true};
   const chunk=pi>=0?t.slice(pi):'',re=/\s(\d{8})\s+(\d{3,4})\s+(\d{4})\s+([A-Za-z]{1,4})\s+([\d.]+,\d{1,4})\s/g;
   let match,prev=0,count=0;
   while((match=re.exec(chunk))){
