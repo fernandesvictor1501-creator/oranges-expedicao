@@ -22,6 +22,15 @@ ready=ready.then(async()=>{
 app.use(session({name:'oranges.sid',secret:process.env.SESSION_SECRET||crypto.randomBytes(48).toString('hex'),resave:false,saveUninitialized:false,cookie:{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',maxAge:1000*60*60*12}}));
 app.use((req,res,next)=>{res.set('Cache-Control','no-store');next()});
 const aut=(req,res,next)=>{if(req.session?.admin)return next();return res.status(401).json({error:'Não autorizado'})};const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const readerAuth=require('./reader-auth')(app,pool,ready,aut);
+const readerGate=readerAuth.readerGate;
+app.use((req,res,next)=>{
+ const pathname=req.path;
+ if(pathname==='/api/public'||pathname==='/api/public/productivity'||pathname==='/api/ais/summary'||pathname.startsWith('/api/ais/file/')||pathname==='/api/documents/summary'||pathname.startsWith('/api/documents/file/')||(pathname==='/api/nf-analysis'&&req.method==='GET')){
+  return readerGate(req,res,next);
+ }
+ return next();
+});
 app.post('/api/login',(req,res)=>{const u=String(req.body?.username||'');const p=String(req.body?.password||'');const expected=process.env.ADMIN_PASSWORD||'';if(!expected)return res.status(503).json({error:'Administrador não configurado'});const ok=u===(process.env.ADMIN_USER||'victor.fernandes')&&crypto.timingSafeEqual(crypto.createHash('sha256').update(p).digest(),crypto.createHash('sha256').update(expected).digest());if(!ok)return res.status(401).json({error:'Credenciais inválidas'});req.session.regenerate(err=>{if(err)return res.status(500).json({error:'Erro de sessão'});req.session.admin=true;res.json({ok:true})})});
 app.get('/api/public',async(req,res)=>{try{
  await ready;
@@ -74,5 +83,5 @@ app.get('/ais-panel.js',aut,(req,res)=>res.type('application/javascript').sendFi
 require('./ais')(app,aut);
 require('./documents')(app,aut,pool,ready);
 require('./nf-data')(app,aut,pool,ready);
-app.get('/nf-analysis',(req,res)=>res.sendFile(path.join(__dirname,'nf-analysis.html')));
-app.get('/login',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));app.get('/admin',aut,(req,res)=>res.sendFile(path.join(__dirname,'admin.html')));app.get('/',(req,res)=>res.sendFile(path.join(__dirname,'public.html')));app.get('*',(req,res)=>res.redirect('/'));const port=process.env.PORT||3000;app.listen(port,'0.0.0.0',()=>console.log('Oranges pronto na porta '+port));
+app.get('/nf-analysis',readerGate,(req,res)=>res.sendFile(path.join(__dirname,'nf-analysis.html')));
+app.get('/acesso',(req,res)=>res.sendFile(path.join(__dirname,'reader-login.html')));app.get('/login',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));app.get('/admin',aut,(req,res)=>res.sendFile(path.join(__dirname,'admin.html')));app.get('/',(req,res)=>{if(!req.session?.readerId&&!req.session?.admin)return res.redirect('/acesso');readerGate(req,res,()=>res.sendFile(path.join(__dirname,'public.html')))});app.get('*',(req,res)=>res.redirect('/'));const port=process.env.PORT||3000;app.listen(port,'0.0.0.0',()=>console.log('Oranges pronto na porta '+port));
