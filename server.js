@@ -64,6 +64,8 @@ app.get('/app-icon.svg',(req,res)=>res.type('image/svg+xml').sendFile(path.join(
 app.get('/app-icon.png',(req,res)=>{const html=require('fs').readFileSync(path.join(__dirname,'admin.html'),'utf8');const m=html.match(/<link rel="icon" type="image\/png" href="data:image\/png;base64,([A-Za-z0-9+/=]+)"/);if(!m)return res.status(404).end();res.type('png').send(Buffer.from(m[1],'base64'))});
 app.get('/sw.js',(req,res)=>res.type('application/javascript').set('Service-Worker-Allowed','/').sendFile(path.join(__dirname,'sw.js')));
 app.get('/public-productivity.js',(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'public-productivity.js')));
+app.get('/documents-public.js',(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'documents-public.js')));
+app.get('/documents-admin.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'documents-admin.js')));
 app.get('/reading-ui.js',(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'reading-ui.js')));
 app.get('/productivity.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'productivity.js')));
 app.get('/ais-clean.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'ais-clean.js')));
