@@ -84,6 +84,7 @@ app.get('/ais-upload.js',aut,(req,res)=>res.type('application/javascript').sendF
 app.get('/ais-panel.js',aut,(req,res)=>res.type('application/javascript').sendFile(path.join(__dirname,'ais-panel.js')));
 require('./ais')(app,aut);
 require('./documents')(app,aut,pool,ready);
+require('./plate-editor')(app,aut,pool,ready);
 require('./nf-data')(app,aut,pool,ready);
 app.get('/nf-analysis',readerGate,(req,res)=>res.sendFile(path.join(__dirname,'nf-analysis.html')));
 app.get('/acesso',(req,res)=>res.sendFile(path.join(__dirname,'reader-login.html')));app.get('/login',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));app.get('/admin',aut,(req,res)=>res.sendFile(path.join(__dirname,'admin.html')));app.get('/',(req,res)=>{if(!req.session?.readerId&&!req.session?.admin)return res.redirect('/acesso');readerGate(req,res,()=>res.sendFile(path.join(__dirname,'public.html')))});app.get('*',(req,res)=>res.redirect('/'));const port=process.env.PORT||3000;app.listen(port,'0.0.0.0',()=>console.log('Oranges pronto na porta '+port));
