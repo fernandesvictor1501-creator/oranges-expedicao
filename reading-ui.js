@@ -71,15 +71,17 @@ function drawTicketCentral(){
  $('rvTicketList').innerHTML=filteredTickets.length?filteredTickets.map(t=>'<article class="rv-ticket-card"><div class="rv-ticket-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4zM12 7v10" /></svg></div><div class="rv-ticket-description"><span>Ticket AIS</span><strong>'+esc(t.ticket_number||'Não identificado')+'</strong><small>Placa '+esc(t.linked_plate)+' · Carga '+esc(t.linked_load)+' · '+esc(t.truck?.cliente||'')+'</small></div><div class="rv-ticket-card-action">'+(t.file_available?'<a class="rv-ticket-link" href="/api/ais/file/'+Number(t.id)+'" target="_blank" rel="noopener noreferrer">↗ Abrir '+(t.file_type==='xml'?'XML':'PDF')+'</a>':'<span class="rv-ticket-unavailable">Documento original indisponível</span>')+'</div></article>').join(''):'<div class="rv-empty">Nenhum ticket vinculado corresponde à busca. Quando o arquivo original estiver disponível, o botão de consulta aparecerá aqui.</div>';
 }
 function openTab(name){
- const ticketsTab=name==='tickets',prodTab=name==='produtividade',pastTab=name==='anteriores',docsTab=name==='documentos';
- $('rvDashboardTab').hidden=ticketsTab||prodTab||pastTab||docsTab;
+ const ticketsTab=name==='tickets',prodTab=name==='produtividade',pastTab=name==='anteriores',docsTab=name==='documentos',nfTab=name==='analiseNF';
+ $('rvDashboardTab').hidden=ticketsTab||prodTab||pastTab||docsTab||nfTab;
  $('rvTicketCentral').hidden=!ticketsTab;
  $('rvDocumentsCentral').hidden=!docsTab;
+ $('rvNFAnalysis').hidden=!nfTab;
  $('rvProductivity').hidden=!prodTab;
  $('rvPreviousLoads').hidden=!pastTab;
  document.querySelectorAll('[data-rv-tab]').forEach(btn=>{const selected=btn.dataset.rvTab===name;btn.classList.toggle('active',selected);btn.setAttribute('aria-selected',String(selected))});
  if(ticketsTab)drawTicketCentral();
  if(pastTab)drawHistory();
+ if(nfTab){const frame=$('rvNFAnalysisFrame');if(frame&&frame.contentWindow)frame.contentWindow.postMessage({source:'oranges-nf-refresh'},location.origin)}
 }
 function stats(){
  const count=all().length;
