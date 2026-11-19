@@ -738,19 +738,19 @@ html[data-oranges-theme="dark"] .reader-request small{color:#ceb6c7}
 <div id="aisUploadResults" aria-live="polite"></div>
 <p class="hint">Cada arquivo será conferido automaticamente. Se não for possível reconhecer o número do ticket ou a placa, ele ficará pendente para revisão manual. A importação não altera o status dos carregamentos.</p>
 </div><p class="muted">Tickets enviados por PDF/XML; correspondências ambíguas ficam pendentes de conferência.</p><div class="ais-summary"><strong id="aisCount">0 tickets</strong><strong id="aisReview">0 para conferir</strong><button id="aisRefresh" type="button" class="secondary">Atualizar</button></div><div id="aisTickets" class="ais-grid"></div><p class="hint">Os arquivos originais permanecem no computador; o servidor armazena informações extraídas e um identificador do arquivo. Nenhum status de caminhão é alterado pela importação.</p></section><section id="importar"><h1>Importar programação e documentos</h1><p class="muted">Excel, CSV, PDF, PNG e XML. Confira os dados extraídos antes de gravar.</p><div class="panel"><h2>Selecionar arquivos</h2><input id="arquivos" type="file" accept=".xlsx,.xls,.csv,.pdf,.png,.xml" multiple><p class="hint">Excel e CSV: uma linha por carga. PDF e PNG: extração de texto para conferência. XML: leitura de NF-e quando reconhecida. Bibliotecas de leitura de Excel/PDF/imagem precisam de internet.</p><button id="processar">Ler arquivos</button><button type="button" id="limparImportacao" class="secondary" style="margin-left:8px">Limpar registros da importação</button><div id="importMsg"></div></div><div id="revisao" class="panel hidden"><h2>Conferência antes de importar</h2><div id="preview" class="tablewrap"></div><div class="toolbar"><button id="confirmar">Confirmar registros válidos</button><button id="cancelar" class="secondary">Descartar prévia</button></div></div></section>
-<section id="editarPlaca" class="hidden" aria-label="Correção de placas de veículos">
-<h1>Correção e edição de placas</h1>
-<p class="muted">Selecione uma carga ativa e corrija a placa do veículo. Os tickets AIS vinculados, NF-e e romaneios serão atualizados junto com a carga, preservando o histórico.</p>
+<section id="editarPlaca" class="hidden" aria-label="Editar informações de carregamentos">
+<h1>Editar dados do carregamento</h1>
+<p class="muted">Selecione uma carga para atualizar suas informações. Alterações de placa ou número de carga atualizam os vínculos dos documentos e tickets, mantendo o histórico de edições.</p>
 <div class="panel" id="plateEditorPanel">
-<h2>Alterar placa do carregamento</h2>
+<h2>Informações do veículo e carregamento</h2>
 <form id="plateEditorForm" autocomplete="off">
-<div class="oranges-plate-edit-fields">
+<div class="oranges-plate-edit-fields" style="margin-bottom:15px">
 <label>Selecionar carga<select id="plateEditorLoad" required><option value="">Selecione uma carga...</option></select></label>
 <label>Placa atual<input id="plateEditorCurrent" readonly placeholder="Placa atual"></label>
-<label>Nova placa<input id="plateEditorNew" required maxlength="7" minlength="7" placeholder="ABC1D23" pattern="[A-Za-z]{3}[0-9][A-Za-z0-9][0-9]{2}" autocapitalize="characters" spellcheck="false"></label>
 </div>
-<div class="toolbar"><button type="submit" id="plateEditorSubmit">Salvar alteração</button><button type="button" class="secondary" id="plateEditorRefresh">Atualizar lista</button></div>
-<p id="plateEditorFeedback" class="hint" role="status" aria-live="polite">A alteração será registrada no histórico. Revise a placa antes de confirmar.</p>
+<div id="plateEditorFields" class="formgrid" style="margin-top:12px"></div>
+<div class="toolbar"><button type="submit" id="plateEditorSubmit">Salvar todas as alterações</button><button type="button" class="secondary" id="plateEditorRefresh">Atualizar lista</button></div>
+<p id="plateEditorFeedback" class="hint" role="status" aria-live="polite">Selecione uma carga e altere os campos necessários. Nenhuma alteração é salva até confirmar.</p>
 </form>
 </div></section>
 <section id="excluirPlaca" class="hidden"><h1>Excluir placa</h1><p class="muted">Exclui definitivamente o carregamento selecionado, incluindo placa, dados cadastrados, tickets, notas anexadas, romaneios, análise de NF vinculada e histórico da carga. Confira com atenção: esta operação não pode ser desfeita.</p><div class="panel"><form id="plateDeleteForm"><label>Carga<select id="plateDeleteLoad" required></select></label><p id="plateDeleteCurrent" class="hint"></p><button class="warn" id="plateDeleteSubmit">Excluir carga e todos os dados</button><p id="plateDeleteFeedback" role="status"></p></form></div></section><section id="cadastro" class="hidden"><h1>Cadastrar carregamento</h1><div class="panel"><form id="formCarga"><div id="campos" class="formgrid"></div><div class="toolbar"><button type="submit">Salvar carregamento</button><button type="reset" class="secondary">Limpar</button></div></form></div></section>
