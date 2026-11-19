@@ -100,11 +100,12 @@ module.exports=function(app,adminAuth,pool,ready){
    const oldDate=String(cargo.dataProgramacao||'');
    const changed=keys.filter(k=>String(k==='dataProgramacao'?oldDate:(cargo[k]??'')).trim()!==changes[k]);
    if(!changed.length)throw Object.assign(new Error('Nenhuma informação alterada.'),{status:400});
+   const previous=Object.fromEntries(keys.map(k=>[k,String(cargo[k]??'')]));
    for(const k of keys)cargo[k]=changes[k];
    const stamp=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
    cargo.atualizado=stamp;
    state.historico=Array.isArray(state.historico)?state.historico:[];
-   state.historico.unshift({data:stamp,placa:changes.placa,carga:changes.carga,antes:'Dados da carga',depois:changed.join(', '),origem:'Edição administrativa — '+changed.map(k=>k+': '+String(k==='placa'?oldPlate:k==='carga'?oldLoad:k==='dataProgramacao'?oldDate:'').slice(0,35)+' → '+String(changes[k]).slice(0,35)).join('; ').slice(0,1200)});
+   state.historico.unshift({data:stamp,placa:changes.placa,carga:changes.carga,antes:'Dados da carga',depois:changed.join(', '),origem:'Edição administrativa — '+changed.map(k=>k+': '+previous[k].slice(0,35)+' → '+changes[k].slice(0,35)).join('; ').slice(0,1200)});
    let tickets=0,docs=0,analysis=0;
    if(referencesChanged&&oldPlate&&oldLoad){
     const linked=await client.query("UPDATE ais_tickets SET linked_plate=$1,linked_load=$2 WHERE linked_plate=$3 AND linked_load=$4 AND match_status='linked'",[changes.placa,changes.carga,oldPlate,oldLoad]);
