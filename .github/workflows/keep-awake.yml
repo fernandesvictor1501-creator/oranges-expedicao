@@ -1,0 +1,26 @@
+name: Manter Oranges ativo
+
+on:
+  schedule:
+    # Verificação a cada 7 minutos, evitando o sono de 15 minutos do Render Free.
+    - cron: "3,10,17,24,31,38,45,52,59 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verificar disponibilidade da Oranges
+        env:
+          URL: https://oranges-expedicao-online.onrender.com/health
+        run: |
+          set -e
+          curl --fail --silent --show-error --location \
+            --max-time 90 --retry 2 --retry-delay 4 \
+            -H 'User-Agent: Oranges-Health-Monitor/1.0' \
+            "$URL" | tee /tmp/oranges-health.json
+          grep -q '"ok":true' /tmp/oranges-health.json
