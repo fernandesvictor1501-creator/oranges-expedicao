@@ -46,6 +46,8 @@ module.exports=function(app,adminAuth,pool,ready){
      state.historico.unshift({data:stamp,placa:c.placa||'',carga:c.carga||'',antes:names[Number(c.status)]||'Pendente',depois:'Liberado',origem:'Finalização em lote de datas anteriores — Administrador'});
      recorded.add(key);
     }
+    // Preserve a programação original for legacy records dated only by 'atualizado'.
+    if(!dateOf(c.dataProgramacao))c.dataProgramacao=dateFor(c);
     c.status=5;c.atualizado=stamp;
    }
    await client.query('UPDATE app_state SET dados=$1::jsonb WHERE id=1',[JSON.stringify(state)]);
