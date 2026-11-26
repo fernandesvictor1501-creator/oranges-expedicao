@@ -754,7 +754,16 @@ html[data-oranges-theme="dark"] .reader-request small{color:#ceb6c7}
 </form>
 </div></section>
 <section id="excluirPlaca" class="hidden"><h1>Excluir placa</h1><p class="muted">Exclui definitivamente o carregamento selecionado, incluindo placa, dados cadastrados, tickets, notas anexadas, romaneios, análise de NF vinculada e histórico da carga. Confira com atenção: esta operação não pode ser desfeita.</p><div class="panel"><form id="plateDeleteForm"><label>Carga<select id="plateDeleteLoad" required></select></label><p id="plateDeleteCurrent" class="hint"></p><button class="warn" id="plateDeleteSubmit">Excluir carga e todos os dados</button><p id="plateDeleteFeedback" role="status"></p></form></div></section><section id="cadastro" class="hidden"><h1>Cadastrar carregamento</h1><div class="panel"><form id="formCarga"><div id="campos" class="formgrid"></div><div class="toolbar"><button type="submit">Salvar carregamento</button><button type="reset" class="secondary">Limpar</button></div></form></div></section>
-<section id="datasAnteriores" class="hidden"><h1>Consultar lançamentos anteriores</h1><p class="muted">Consulte cargas de programações passadas, inclusive as arquivadas na limpeza. Nenhuma carga antiga entra nos indicadores de hoje.</p><div class="panel"><div class="toolbar"><label class="admin-date-label" for="adminPreviousDate">Data da programação</label><select id="adminPreviousDate" aria-label="Selecionar data anterior"><option value="">Sem datas anteriores</option></select><strong id="adminPreviousCount">0 cargas</strong></div><div id="adminPreviousResults" class="tablewrap" aria-live="polite"></div></div></section><section id="naoCarregou" class="hidden" aria-label="Veículos que não carregaram"><h1>Não carregou</h1><p class="muted">Registre os veículos liberados que não realizaram o carregamento. O motivo é obrigatório, permanece no histórico e pode ser consultado pela equipe.</p><div class="panel"><h2>Registrar ocorrência</h2><form id="notLoadedForm"><div class="oranges-no-load-form"><label>Veículo liberado<select id="notLoadedCargo" required><option value="">Selecione uma carga liberada</option></select></label><label>Motivo do não carregamento<select id="notLoadedReasonType" required><option value="">Selecione o motivo</option><option value="Veículo não compareceu">Veículo não compareceu</option><option value="Problema mecânico">Problema mecânico</option><option value="Desistência ou cancelamento">Desistência ou cancelamento</option><option value="Falta de produto">Falta de produto</option><option value="Problema documental">Problema documental</option><option value="Divergência de carga">Divergência de carga</option><option value="Outro">Outro motivo</option></select></label><label class="reason-wide">Detalhamento do motivo<textarea id="notLoadedReason" rows="3" maxlength="800" placeholder="Descreva por que o veículo não carregou..." required></textarea></label></div><div class="toolbar"><button type="submit" id="notLoadedSubmit">Registrar não carregamento</button></div><p id="notLoadedFeedback" role="status" class="hint">Selecione um veículo já liberado e informe o motivo.</p></form></div><div class="panel"><h2>Veículos que não carregaram</h2><div id="notLoadedHistory" class="tablewrap"></div></div></section>
+<section id="datasAnteriores" class="hidden"><h1>Consultar lançamentos anteriores</h1><p class="muted">Consulte cargas de programações passadas, inclusive as arquivadas na limpeza. Nenhuma carga antiga entra nos indicadores de hoje.</p><div class="panel"><div class="toolbar"><label class="admin-date-label" for="adminPreviousDate">Data da programação</label><select id="adminPreviousDate" aria-label="Selecionar data anterior"><option value="">Sem datas anteriores</option></select><strong id="adminPreviousCount">0 cargas</strong></div><div id="adminPreviousResults" class="tablewrap" aria-live="polite"></div></div>
+<div class="panel" id="pastFinalizePanel">
+<h2>Finalizar carregamentos de datas anteriores</h2>
+<p class="muted">Altera para <strong>LIBERADO</strong> as cargas pendentes de datas passadas, inclusive arquivadas. Mantém os registros, documentos e histórico. Cargas já liberadas e ocorrências NÃO CARREGOU não serão modificadas.</p>
+<div class="toolbar" style="flex-wrap:wrap;gap:12px">
+<button type="button" class="secondary" id="pastFinalizeSelected">Finalizar pendentes da data selecionada</button>
+<button type="button" class="warn" id="pastFinalizeAll">Finalizar pendentes de TODAS as datas anteriores</button>
+</div>
+<p id="pastFinalizeFeedback" class="hint" role="status" aria-live="polite">Selecione a data ou finalize todas as datas anteriores, com confirmação.</p>
+</div></section><section id="naoCarregou" class="hidden" aria-label="Veículos que não carregaram"><h1>Não carregou</h1><p class="muted">Registre os veículos liberados que não realizaram o carregamento. O motivo é obrigatório, permanece no histórico e pode ser consultado pela equipe.</p><div class="panel"><h2>Registrar ocorrência</h2><form id="notLoadedForm"><div class="oranges-no-load-form"><label>Veículo liberado<select id="notLoadedCargo" required><option value="">Selecione uma carga liberada</option></select></label><label>Motivo do não carregamento<select id="notLoadedReasonType" required><option value="">Selecione o motivo</option><option value="Veículo não compareceu">Veículo não compareceu</option><option value="Problema mecânico">Problema mecânico</option><option value="Desistência ou cancelamento">Desistência ou cancelamento</option><option value="Falta de produto">Falta de produto</option><option value="Problema documental">Problema documental</option><option value="Divergência de carga">Divergência de carga</option><option value="Outro">Outro motivo</option></select></label><label class="reason-wide">Detalhamento do motivo<textarea id="notLoadedReason" rows="3" maxlength="800" placeholder="Descreva por que o veículo não carregou..." required></textarea></label></div><div class="toolbar"><button type="submit" id="notLoadedSubmit">Registrar não carregamento</button></div><p id="notLoadedFeedback" role="status" class="hint">Selecione um veículo já liberado e informe o motivo.</p></form></div><div class="panel"><h2>Veículos que não carregaram</h2><div id="notLoadedHistory" class="tablewrap"></div></div></section>
 <section id="historico" class="hidden"><h1>Histórico de movimentações</h1><div class="panel"><div id="histTable" class="tablewrap"></div></div></section>
 <section id="limpeza" class="hidden"><h1>Limpar programação de dias anteriores</h1><div class="panel"><h2>Selecionar período</h2><p class="hint">Remove apenas as cargas com data de cadastro anterior à data selecionada. Cargas sem data identificável não são removidas automaticamente. O histórico de movimentações é preservado.</p><div class="toolbar"><label class="field">Remover cargas anteriores a<input type="date" id="dataLimite"></label><button id="verificarLimpeza" class="secondary">Verificar cargas</button></div><div id="limpezaResumo" class="notice">Escolha a data e clique em Verificar cargas.</div><div id="limpezaLista"></div><label style="display:flex;gap:9px;align-items:center;margin:14px 0"><input type="checkbox" id="incluirPendentes"> Incluir cargas ainda não liberadas (requer atenção)</label><label style="display:flex;gap:9px;align-items:center;margin:14px 0"><input type="checkbox" id="confirmarLimpeza"> Confirmo que revisei os registros e quero remover os selecionados.</label><div class="toolbar"><button id="executarLimpeza" class="warn" disabled>Baixar backup e limpar programação</button></div><p class="hint">O backup JSON será baixado antes da remoção. Guarde o arquivo para recuperação. Esta versão mantém os dados no servidor.</p></div></section><section id="config" class="hidden"><h1>Dados e backup</h1><div class="panel"><h2>Armazenamento desta versão</h2><p>Os registros são salvos no servidor e compartilhados com o painel público. Integração com o AIS ainda não está disponível.</p><div class="toolbar"><button id="exportCSV">Exportar CSV</button><button id="backup">Baixar backup JSON</button><label class="button" for="restaurar">Restaurar backup JSON</label><input id="restaurar" type="file" accept=".json" style="display:none"><button class="warn" id="limpar">Apagar todos os dados</button></div></div><div class="panel"><h2>Entrada AIS — modo de teste</h2><p class="hint">Simule uma pesagem inicial. A placa só será atualizada se corresponder a uma única carga aguardando chegada.</p><div class="toolbar"><input id="aisPlaca" placeholder="Placa"><input id="aisTicket" placeholder="Ticket AIS"><button id="simularAIS">Simular entrada</button></div><div id="aisMsg"></div></div></section><footer>Versão online · Identidade visual Oranges · Integração automática com o AIS não disponível.</footer></main>
 <script>
@@ -944,4 +953,55 @@ window.addEventListener('message',function(event){
  const height=Number(event.data.height);
  if(Number.isFinite(height))frame.style.height=Math.min(12000,Math.max(700,height+14))+'px';
 });
+</script><script id="past-finalize-action">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const note=$('pastFinalizeFeedback');
+ if(!note)return;
+ const parseDate=v=>{
+  const t=String(v||'').trim(),a=t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(a)return a[1]+'-'+a[2]+'-'+a[3];
+  const b=t.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  return b?b[3]+'-'+b[2]+'-'+b[1]:'';
+ };
+ const day=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ const dateFor=c=>parseDate(c.dataProgramacao)||parseDate(c.atualizado);
+ async function finish(scope){
+  const selected=$('adminPreviousDate').value,today=day();
+  if(scope==='date'&&!selected)return note.textContent='Selecione uma data anterior.';
+  const button=$(scope==='all'?'pastFinalizeAll':'pastFinalizeSelected');
+  button.disabled=true;note.textContent='Consultando os carregamentos...';
+  try{
+   await filaSalvamento;
+   const r=await fetch('/api/state',{cache:'no-store',credentials:'same-origin'});
+   if(!r.ok)throw Error('Não foi possível atualizar os dados das cargas.');
+   const source=await r.json();
+   const all=[...(Array.isArray(source.cargas)?source.cargas:[]),...(Array.isArray(source.cargasArquivadas)?source.cargasArquivadas:[])];
+   const eligible=all.filter(c=>{
+    const date=dateFor(c),status=Number(c.status);
+    return date&&date<today&&(scope==='all'||date===selected)&&status>=0&&status<5;
+   });
+   const ids=[...new Set(eligible.map(c=>String(c.id)))];
+   if(!ids.length)return note.textContent='Não há carregamentos pendentes para finalizar nessa seleção.';
+   const dates=[...new Set(eligible.map(dateFor))].sort();
+   const label=scope==='all'?'TODAS AS DATAS ANTERIORES':'DATA '+selected.split('-').reverse().join('/');
+   if(!confirm('FINALIZAR '+ids.length+' CARREGAMENTO(S) DE '+label+'?\n\nTodos passarão diretamente para LIBERADO. Histórico e arquivos serão preservados. NÃO CARREGOU e cargas já liberadas permanecem inalteradas.'))return note.textContent='Operação cancelada.';
+   if(prompt('Para confirmar '+ids.length+' carga(s), digite FINALIZAR:')!=='FINALIZAR')return note.textContent='Operação cancelada: confirmação não informada.';
+   note.textContent='Salvando a finalização no servidor...';
+   const response=await fetch('/api/admin/loads/finalize-previous',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope,date:scope==='date'?selected:'',expected_ids:ids,confirmation:'FINALIZAR'})});
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok)throw Error(result.error||'Não foi possível finalizar.');
+   const refreshed=await fetch('/api/state',{cache:'no-store',credentials:'same-origin'});
+   if(!refreshed.ok)throw Error('Finalização salva, mas a tela precisa ser atualizada.');
+   db=await refreshed.json();
+   render();
+   renderAdminPast();
+   note.textContent=result.updated+' carregamento(s) finalizado(s) como LIBERADO. Histórico preservado.';
+  }catch(e){note.textContent='Erro: '+e.message}
+  finally{button.disabled=false}
+ }
+ $('pastFinalizeSelected').addEventListener('click',()=>finish('date'));
+ $('pastFinalizeAll').addEventListener('click',()=>finish('all'));
+})();
 </script><script src="/reader-approvals.js" defer></script><script src="/plate-edit-admin.js" defer></script><script src="/plate-delete-admin.js" defer></script></body></html>
