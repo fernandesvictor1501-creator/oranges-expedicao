@@ -98,7 +98,7 @@ app.post('/api/reader/admin/requests/:id',adminAuth,async(req,res)=>{
  const id=Number(req.params.id),decision=String(req.body?.decision||''),sector=String(req.body?.sector||''),permissions=checkPerms(req.body?.permissions);
  if(!Number.isSafeInteger(id)||id<1||!['approved','rejected'].includes(decision))return error(res,'Solicitação ou decisão inválida.');
  if(decision==='approved'&&(!SECTORS.includes(sector)||!permissions||!permissions.length))return error(res,'Selecione setor e pelo menos uma permissão.');
- try{await init;const q=await pool.query("UPDATE reader_accounts SET status=$1,sector=CASE WHEN $1='approved' THEN $3 ELSE sector END,permissions=CASE WHEN $1='approved' THEN $4::jsonb ELSE permissions END,reviewed_at=now() WHERE id=$2 AND status='pending' RETURNING id",[decision,id,sector,JSON.stringify(permissions||[])]);if(!q.rowCount)return error(res,'Solicitação já analisada.',409);res.json({ok:true,status:decision})}
+ try{await init;const q=await pool.query("UPDATE reader_accounts SET status=$1::varchar(16),sector=CASE WHEN $1::text='approved' THEN $3 ELSE sector END,permissions=CASE WHEN $1::text='approved' THEN $4::jsonb ELSE permissions END,reviewed_at=now() WHERE id=$2 AND status='pending' RETURNING id",[decision,id,sector,JSON.stringify(permissions||[])]);if(!q.rowCount)return error(res,'Solicitação já analisada.',409);res.json({ok:true,status:decision})}
  catch(e){console.error('approval',e.message);error(res,'Falha ao avaliar solicitação.',503)}
 });
 app.post('/api/reader/admin/accounts/:id',adminAuth,async(req,res)=>{
