@@ -2,6 +2,61 @@
 const normalize=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const plateValid=p=>/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(p);
 module.exports=function(app,adminAuth,pool,ready){
+ // Finalização em lote de cargas de datas anteriores, inclusive registros arquivados.
+ app.post('/api/admin/loads/finalize-previous',adminAuth,async(req,res)=>{
+  const scope=String(req.body?.scope||''),selectedDate=String(req.body?.date||'');
+  const confirmation=String(req.body?.confirmation||'');
+  const expectedIds=req.body?.expected_ids;
+  if(!['date','all'].includes(scope)||confirmation!=='FINALIZAR'||(scope==='date'&&!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate))||
+     !Array.isArray(expectedIds)||expectedIds.length>10000||expectedIds.some(id=>typeof id!=='string'||id.length>150))
+   return res.status(400).json({error:'Dados de confirmação inválidos.'});
+  const dateOf=v=>{
+   const raw=String(v||'').trim();
+   const a=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+   if(a)return a[1]+'-'+a[2]+'-'+a[3];
+   const b=raw.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+   return b?b[3]+'-'+b[2]+'-'+b[1]:'';
+  };
+  const localDay=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const dateFor=c=>dateOf(c.dataProgramacao)||dateOf(c.atualizado);
+  const eligible=c=>{
+   const day=dateFor(c),status=Number(c.status);
+   return day&&day<localDay&&(scope==='all'||day===selectedDate)&&status>=0&&status<5;
+  };
+  let client;
+  try{
+   await ready;client=await pool.connect();await client.query('BEGIN');
+   const q=await client.query('SELECT dados FROM app_state WHERE id=1 FOR UPDATE'),state=q.rows[0]?.dados;
+   if(!state||!Array.isArray(state.cargas))throw Object.assign(new Error('Programação indisponível.'),{status:503});
+   const archived=Array.isArray(state.cargasArquivadas)?state.cargasArquivadas:[];
+   const all=[...state.cargas,...archived];
+   const targets=[...new Set(all.filter(eligible).map(c=>String(c.id)))].sort();
+   const expected=[...new Set(expectedIds)].sort();
+   if(targets.length!==expected.length||targets.some((id,i)=>id!==expected[i]))
+    throw Object.assign(new Error('A lista de cargas mudou. Atualize a tela e revise antes de confirmar.'),{status:409});
+   if(!targets.length)throw Object.assign(new Error('Nenhuma carga pendente encontrada nas datas selecionadas.'),{status:400});
+   const ids=new Set(targets),stamp=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+   state.historico=Array.isArray(state.historico)?state.historico:[];
+   const recorded=new Set();
+   for(const c of all){
+    const key=String(c.id);
+    if(!ids.has(key)||!eligible(c))continue;
+    if(!recorded.has(key)){
+     const names=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação'];
+     state.historico.unshift({data:stamp,placa:c.placa||'',carga:c.carga||'',antes:names[Number(c.status)]||'Pendente',depois:'Liberado',origem:'Finalização em lote de datas anteriores — Administrador'});
+     recorded.add(key);
+    }
+    c.status=5;c.atualizado=stamp;
+   }
+   await client.query('UPDATE app_state SET dados=$1::jsonb WHERE id=1',[JSON.stringify(state)]);
+   await client.query('COMMIT');
+   res.json({ok:true,updated:recorded.size,scope,date:scope==='date'?selectedDate:null});
+  }catch(e){
+   if(client)await client.query('ROLLBACK').catch(()=>{});
+   console.error('bulk finalize past loads',e.message);
+   res.status(e.status||503).json({error:e.status?e.message:'Falha ao finalizar cargas anteriores. Dados preservados.'});
+  }finally{if(client)client.release()}
+ });
  app.post('/api/admin/plate/delete',adminAuth,async(req,res)=>{
   const id=String(req.body?.id||'').trim();
   const expectedPlate=normalize(req.body?.plate);
