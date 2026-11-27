@@ -737,7 +737,7 @@ html[data-oranges-theme="dark"] .reader-request small{color:#ceb6c7}
 <p id="aisUploadStatus" role="status" aria-live="polite">Nenhum arquivo selecionado.</p>
 <div id="aisUploadResults" aria-live="polite"></div>
 <p class="hint">Cada arquivo será conferido automaticamente. Se não for possível reconhecer o número do ticket ou a placa, ele ficará pendente para revisão manual. A importação não altera o status dos carregamentos.</p>
-</div><p class="muted">Tickets enviados por PDF/XML; correspondências ambíguas ficam pendentes de conferência.</p><div class="ais-summary"><strong id="aisCount">0 tickets</strong><strong id="aisReview">0 para conferir</strong><button id="aisRefresh" type="button" class="secondary">Atualizar</button></div><div id="aisTickets" class="ais-grid"></div><p class="hint">Os arquivos originais permanecem no computador; o servidor armazena informações extraídas e um identificador do arquivo. Nenhum status de caminhão é alterado pela importação.</p></section><section id="importar"><h1>Importar programação e documentos</h1><p class="muted">Excel, CSV, PDF, PNG e XML. Confira os dados extraídos antes de gravar.</p><div class="panel"><h2>Selecionar arquivos</h2><input id="arquivos" type="file" accept=".xlsx,.xls,.csv,.pdf,.png,.xml" multiple><p class="hint">Excel e CSV: uma linha por carga. PDF e PNG: extração de texto para conferência. XML: leitura de NF-e quando reconhecida. Bibliotecas de leitura de Excel/PDF/imagem precisam de internet.</p><button id="processar">Ler arquivos</button><button type="button" id="limparImportacao" class="secondary" style="margin-left:8px">Limpar registros da importação</button><div id="importMsg"></div></div><div id="revisao" class="panel hidden"><h2>Conferência antes de importar</h2><div id="preview" class="tablewrap"></div><p class="hint">Edite os campos da tabela e clique em <b>Salvar alteração</b>. Depois, use <b>Confirmar registros válidos</b> para cadastrar a programação no sistema.</p><div class="toolbar"><button type="button" id="salvarAlteracaoImportacao" class="secondary">Salvar alteração</button><button id="confirmar">Confirmar registros válidos</button><button id="cancelar" class="secondary">Descartar prévia</button></div><p id="importEditMsg" role="status" aria-live="polite" class="hint"></p></div></section>
+</div><p class="muted">Tickets enviados por PDF/XML; correspondências ambíguas ficam pendentes de conferência.</p><div class="ais-summary"><strong id="aisCount">0 tickets</strong><strong id="aisReview">0 para conferir</strong><button id="aisRefresh" type="button" class="secondary">Atualizar</button></div><div id="aisTickets" class="ais-grid"></div><p class="hint">Os arquivos originais permanecem no computador; o servidor armazena informações extraídas e um identificador do arquivo. Nenhum status de caminhão é alterado pela importação.</p></section><section id="importar"><h1>Importar programação e documentos</h1><p class="muted">Excel, CSV, PDF, PNG e XML. Confira os dados extraídos antes de gravar.</p><div class="panel"><h2>Selecionar arquivos</h2><input id="arquivos" type="file" accept=".xlsx,.xls,.csv,.pdf,.png,.xml" multiple><p class="hint">Excel e CSV: uma linha por carga. PDF e PNG: extração de texto para conferência. XML: leitura de NF-e quando reconhecida. Bibliotecas de leitura de Excel/PDF/imagem precisam de internet.</p><button id="processar">Ler arquivos</button><button type="button" id="limparImportacao" class="secondary" style="margin-left:8px">Limpar registros da importação</button><div id="importMsg"></div></div><div id="revisao" class="panel hidden"><h2>Conferência antes de importar</h2><div id="preview" class="tablewrap"></div><p class="hint">Para editar um registro JÁ EXISTENTE, selecione a carga na coluna <b>DESTINO DA ALTERAÇÃO</b> e clique em <b>SALVAR ALTERAÇÃO</b>. Para uma carga nova, mantenha <b>NOVO CARREGAMENTO</b> e clique em <b>CONFIRMAR REGISTROS VÁLIDOS</b>.</p><div class="toolbar"><button type="button" id="salvarAlteracaoImportacao" class="secondary">Salvar alteração</button><button id="confirmar">Confirmar registros válidos</button><button id="cancelar" class="secondary">Descartar prévia</button></div><p id="importEditMsg" role="status" aria-live="polite" class="hint"></p></div></section>
 <section id="editarPlaca" class="hidden" aria-label="Editar informações de carregamentos">
 <h1>Editar dados do carregamento</h1>
 <p class="muted">Selecione uma carga para atualizar suas informações. Alterações de placa ou número de carga atualizam os vínculos dos documentos e tickets, mantendo o histórico de edições.</p>
@@ -806,51 +806,122 @@ function xmlData(text){let doc=new DOMParser().parseFromString(text,'application
 function extracted(text){const match=(re)=>text.match(re)?.[1]?.trim()||'';return[{certificacao:match(/certifica(?:ç|c)[aã]o\s*[:\-]?\s*([^\n]+)/i),produto:match(/produto\s*[:\-]?\s*([^\n]+)/i),codigo:match(/c[oó]d(?:igo)?\s*(?:do produto)?\s*[:\-]?\s*([^\n]+)/i),pedido:match(/pedido\s*[:#\-]?\s*([\w\-/]+)/i),placa:match(/placa\s*[:\-]?\s*([A-Z]{3}[- ]?[0-9][A-Z0-9]{3})/i),carga:match(/(?:oe\s*\/\s*)?carga\s*[:#\-]?\s*([\w\-/]+)/i),cliente:match(/cliente\s*[:\-]?\s*([^\n]+)/i),quantidade:match(/quantidade\s*[:\-]?\s*([\d.,]+\s*\w*)/i),transportadora:match(/transportadora\s*[:\-]?\s*([^\n]+)/i),cidade:match(/cidade\s*[:\-]?\s*([^\n]+)/i),frete:match(/frete\s*[:\-]?\s*(CIF|FOB)/i),motorista:match(/motorista\s*[:\-]?\s*([^\n]+)/i)}]}
 function loadScript(url){return new Promise((res,rej)=>{let s=document.createElement('script');s.src=url;s.onload=res;s.onerror=()=>rej(Error('Não foi possível carregar biblioteca externa. Verifique a internet.'));document.head.appendChild(s)})}
 async function parseFile(file){let ext=file.name.split('.').pop().toLowerCase();if(ext==='csv')return mapped(parseCSV(await file.text()));if(ext==='xml')return xmlData(await file.text());if(ext==='xlsx'||ext==='xls'){if(!window.XLSX)await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');let wb=XLSX.read(await file.arrayBuffer(),{type:'array'});return mapped(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}))}if(ext==='pdf'){if(!window.pdfjsLib)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';let doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,txt='';for(let i=1;i<=Math.min(doc.numPages,20);i++){let p=await doc.getPage(i),t=await p.getTextContent();txt+=t.items.map(x=>x.str).join(' ')+'\n'}if(!txt.trim())throw Error('PDF sem texto selecionável; é necessário OCR para PDF digitalizado');return extracted(txt)}if(ext==='png'){if(!window.Tesseract)await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');let r=await Tesseract.recognize(file,'por+eng');return extracted(r.data.text)}throw Error('Formato não suportado')}
-function preview(){if(!pendentes.length){$('revisao').classList.add('hidden');return}$('revisao').classList.remove('hidden');$('preview').innerHTML=`<table><thead><tr><th>Importar</th>${FIELDS.map(([k,l])=>`<th>${esc(l)}</th>`).join('')}</tr></thead><tbody>${pendentes.map((x,i)=>`<tr><td><input type="checkbox" class="pick" data-i="${i}" checked></td>${FIELDS.map(([k])=>`<td><input style="width:135px" data-i="${i}" data-field="${k}" value="${esc(x[k])}"></td>`).join('')}</tr>`).join('')}</tbody></table>`}
+function preview(){
+ if(!pendentes.length){$('revisao').classList.add('hidden');return}
+ $('revisao').classList.remove('hidden');
+ const options=(Array.isArray(db.cargas)?db.cargas:[]).map(c=>({id:String(c.id),label:'CARGA '+(c.carga||'—')+' | '+(c.placa||'SEM PLACA')+' | '+(c.cliente||'')} ));
+ $('preview').innerHTML='<table><thead><tr><th>IMPORTAR</th><th>DESTINO DA ALTERAÇÃO</th>'+FIELDS.map(([,l])=>'<th>'+esc(l)+'</th>').join('')+'</tr></thead><tbody>'+
+ pendentes.map((x,i)=>{
+  const matches=db.cargas.filter(c=>norm(c.placa)===norm(x.placa)&&norm(c.carga)===norm(x.carga)&&norm(x.placa)&&norm(x.carga));
+  const target=x.__targetId!==undefined?String(x.__targetId):(matches.length===1?String(matches[0].id):'');
+  x.__targetId=target;
+  const select='<select class="import-target" data-i="'+i+'" aria-label="Destino da linha '+(i+1)+'" style="min-width:215px"><option value="">NOVO CARREGAMENTO</option>'+options.map(o=>'<option value="'+esc(o.id)+'"'+(o.id===target?' selected':'')+'>'+esc(o.label)+'</option>').join('')+'</select>';
+  return '<tr><td><input type="checkbox" class="pick" data-i="'+i+'" checked></td><td>'+select+'</td>'+
+   FIELDS.map(([k])=>'<td><input style="width:135px" data-i="'+i+'" data-field="'+k+'" value="'+esc(x[k])+'"></td>').join('')+'</tr>';
+ }).join('')+'</tbody></table>';
+}
 function salvarEdicaoImportacao(){
- const feedback=$('importEditMsg');
- if(!pendentes.length){feedback.textContent='NÃO HÁ REGISTROS NA PRÉVIA PARA SALVAR.';return false}
- const campos=[...document.querySelectorAll('#preview input[data-field]')];
- const corrigidos=pendentes.map(v=>({...v}));
- const mudancas=new Set();
- for(const campo of campos){
-  const i=Number(campo.dataset.i),chave=campo.dataset.field;
-  if(!Number.isInteger(i)||i<0||!corrigidos[i]||!FIELDS.some(([k])=>k===chave))continue;
-  // Nenhuma validação ou formatação obrigatória na prévia; salvar exatamente o que foi digitado.
-  const valor=String(campo.value??'');
-  if(String(corrigidos[i][chave]??'')!==valor)mudancas.add(i);
-  corrigidos[i][chave]=valor;
- }
- pendentes=corrigidos;
- feedback.style.color='#21845a';
- feedback.textContent=mudancas.size?mudancas.size+' REGISTRO(S) ALTERADO(S) E SALVO(S) NA PRÉVIA. CLIQUE EM CONFIRMAR PARA GRAVAR NO SISTEMA.':'PRÉVIA SALVA. CLIQUE EM CONFIRMAR REGISTROS VÁLIDOS PARA IMPORTAR.';
+ if(!pendentes.length){$('importEditMsg').textContent='NÃO HÁ REGISTROS NA PRÉVIA.';return false}
+ const copy=pendentes.map(x=>({...x}));
+ let changes=0;
+ document.querySelectorAll('#preview input[data-field]').forEach(el=>{
+  const row=copy[Number(el.dataset.i)];if(!row)return;
+  const value=String(el.value??'');
+  if(String(row[el.dataset.field]??'')!==value)changes++;
+  row[el.dataset.field]=value;
+ });
+ document.querySelectorAll('#preview select.import-target').forEach(el=>{
+  const row=copy[Number(el.dataset.i)];if(row)row.__targetId=el.value;
+ });
+ pendentes=copy;
+ $('importEditMsg').textContent=changes?changes+' CAMPO(S) SALVO(S) NA PRÉVIA.':'PRÉVIA CONFERIDA.';
  return true;
 }
-function confirmarImportacao(){
+async function atualizarImportados(selected){
+ // Exige seleção explícita (ou correspondência exata e única) do registro a editar.
+ const edits=selected.filter(x=>x.__targetId);
+ if(!edits.length)return 0;
+ if(new Set(edits.map(x=>x.__targetId)).size!==edits.length)
+  throw Error('A MESMA CARGA FOI SELECIONADA EM MAIS DE UMA LINHA. REVISE OS DESTINOS.');
+ await filaSalvamento;
+ const fresh=await fetch('/api/state',{credentials:'same-origin',cache:'no-store'});
+ if(!fresh.ok)throw Error('NÃO FOI POSSÍVEL CONSULTAR AS CARGAS ATUAIS.');
+ db=await fresh.json();
+ let done=0;
+ for(const item of edits){
+  const current=db.cargas.find(c=>String(c.id)===String(item.__targetId));
+  if(!current)throw Error('CARGA EXISTENTE NÃO ENCONTRADA: '+item.__targetId);
+  const fields=Object.fromEntries(FIELDS.map(([k])=>[k,String(item[k]??'')]));
+  const res=await fetch('/api/admin/import/update-load',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+   id:String(item.__targetId),
+   fields,
+   expected:{placa:current.placa||'',carga:current.carga||'',atualizado:current.atualizado||''}
+  })});
+  const answer=await res.json().catch(()=>({}));
+  if(!res.ok)throw Error('CARGA '+(current.carga||current.placa||'')+': '+(answer.error||'FALHA AO SALVAR'));
+  done++;
+  const latest=await fetch('/api/state',{credentials:'same-origin',cache:'no-store'});
+  if(!latest.ok)throw Error('ATUALIZAÇÃO SALVA, MAS NÃO FOI POSSÍVEL RECARREGAR O PAINEL.');
+  db=await latest.json();
+ }
+ render();
+ return done;
+}
+async function salvarAlteracoesPainel(){
  if(!salvarEdicaoImportacao())return;
- const selected=[...document.querySelectorAll('#preview input.pick:checked')].map(e=>pendentes[Number(e.dataset.i)]).filter(Boolean);
- if(!selected.length){$('importEditMsg').textContent='SELECIONE PELO MENOS UM REGISTRO PARA IMPORTAR.';return}
- const copy=db.cargas.slice(),logCopy=db.historico.slice();
- let count=0,errors=[];
- for(const row of selected)try{add(row,'Importação de arquivo');count++}catch(err){errors.push(err.message)}
- if(!count){db.cargas=copy;db.historico=logCopy;$('importEditMsg').textContent='NENHUM REGISTRO IMPORTADO: '+errors.slice(0,5).join(' | ');return}
- save();pendentes=[];preview();
- alertBox('importMsg',count+' REGISTRO(S) IMPORTADO(S). '+errors.length+' IGNORADO(S). '+errors.slice(0,5).join(' | '),errors.length>0);
+ const selected=[...document.querySelectorAll('#preview input.pick:checked')].map(el=>pendentes[Number(el.dataset.i)]).filter(Boolean);
+ if(!selected.length){$('importEditMsg').textContent='SELECIONE PELO MENOS UMA LINHA.';return}
+ const edits=selected.filter(x=>x.__targetId),news=selected.length-edits.length;
+ if(!edits.length){
+  $('importEditMsg').textContent='ALTERAÇÕES GUARDADAS NA PRÉVIA. PARA NOVAS CARGAS, CLIQUE EM CONFIRMAR REGISTROS VÁLIDOS.';
+  return;
+ }
+ if(!confirm('ATUALIZAR '+edits.length+' CARGA(S) EXISTENTE(S) NO PAINEL? OS STATUS SERÃO PRESERVADOS. '+news+' LINHA(S) NOVA(S) CONTINUARÃO NA PRÉVIA.'))return;
+ try{
+  const updated=await atualizarImportados(selected);
+  $('importEditMsg').textContent=updated+' CARGA(S) ATUALIZADA(S) NO PAINEL. ATUALIZE A PÁGINA DE LEITURA PARA CONFERIR.';
+ }catch(e){$('importEditMsg').textContent='ERRO: '+e.message}
+}
+async function confirmarImportacao(){
+ if(!salvarEdicaoImportacao())return;
+ const selected=[...document.querySelectorAll('#preview input.pick:checked')].map(el=>pendentes[Number(el.dataset.i)]).filter(Boolean);
+ if(!selected.length){$('importEditMsg').textContent='SELECIONE PELO MENOS UMA LINHA.';return}
+ const edits=selected.filter(x=>x.__targetId),newRows=selected.filter(x=>!x.__targetId);
+ if(!confirm('CONFIRMAR '+edits.length+' ATUALIZAÇÃO(ÕES) DE CARGAS EXISTENTES E '+newRows.length+' NOVO(S) CARREGAMENTO(S)?'))return;
+ try{
+  const updated=await atualizarImportados(selected);
+  let inserted=0,errors=[];
+  if(newRows.length){
+   // Recarregar o banco antes do salvamento de novas cargas, evitando sobrescrever edições recém-feitas.
+   const response=await fetch('/api/state',{credentials:'same-origin',cache:'no-store'});
+   if(!response.ok)throw Error('NÃO FOI POSSÍVEL ATUALIZAR O ESTADO ANTES DA IMPORTAÇÃO.');
+   db=await response.json();
+   for(const item of newRows)try{add(item,'Importação de arquivo');inserted++}catch(err){errors.push(err.message)}
+   if(inserted)save();
+  }
+  pendentes=[];preview();render();
+  alertBox('importMsg',updated+' CARGA(S) ATUALIZADA(S) E '+inserted+' NOVA(S) IMPORTADA(S). '+errors.length+' NÃO IMPORTADA(S): '+errors.slice(0,4).join(' | '),!!errors.length);
+ }catch(e){$('importEditMsg').textContent='ERRO: '+e.message}
 }
 function descartarImportacao(){
- const count=pendentes.length;
- if(count&&!confirm('DESCARTAR A PRÉVIA COM '+count+' REGISTRO(S)?'))return;
+ if(pendentes.length&&!confirm('DESCARTAR '+pendentes.length+' LINHA(S) DA PRÉVIA?'))return;
  pendentes=[];preview();$('importEditMsg').textContent='PRÉVIA DESCARTADA.';
 }
 (function ligarAcoesImportacao(){
- const saveButton=$('salvarAlteracaoImportacao'),confirmButton=$('confirmar'),discardButton=$('cancelar');
- if(!saveButton||!confirmButton||!discardButton){console.error('Botões da importação não encontrados');return}
- saveButton.type='button';confirmButton.type='button';discardButton.type='button';
- saveButton.addEventListener('click',()=>{try{salvarEdicaoImportacao()}catch(e){console.error(e);$('importEditMsg').textContent='ERRO AO SALVAR ALTERAÇÃO: '+e.message}});
- confirmButton.addEventListener('click',()=>{try{confirmarImportacao()}catch(e){console.error(e);$('importEditMsg').textContent='ERRO AO CONFIRMAR IMPORTAÇÃO: '+e.message}});
- discardButton.addEventListener('click',()=>{try{descartarImportacao()}catch(e){console.error(e);$('importEditMsg').textContent='ERRO AO DESCARTAR PRÉVIA: '+e.message}});
+ const buttons=['salvarAlteracaoImportacao','confirmar','cancelar'].map($);
+ buttons.forEach(b=>b.type='button');
+ buttons[0].addEventListener('click',async()=>{buttons[0].disabled=true;try{await salvarAlteracoesPainel()}finally{buttons[0].disabled=false}});
+ buttons[1].addEventListener('click',async()=>{buttons[1].disabled=true;try{await confirmarImportacao()}finally{buttons[1].disabled=false}});
+ buttons[2].addEventListener('click',descartarImportacao);
 })();
-$('processar').onclick=async()=>{let files=[...$('arquivos').files];if(!files.length)return alertBox('importMsg','Selecione ao menos um arquivo.',true);pendentes=[];let errors=[];$('processar').disabled=true;$('processar').textContent='Lendo...';for(const file of files){try{let arr=await parseFile(file);pendentes.push(...arr)}catch(e){errors.push(file.name+': '+e.message)}}$('processar').disabled=false;$('processar').textContent='Ler arquivos';alertBox('importMsg',`${pendentes.length} registro(s) para conferir.${errors.length?' Problemas: '+errors.join(' | '):''}`,!!errors.length);$('importEditMsg').textContent='';preview()};
+$('processar').onclick=async()=>{
+ const files=[...$('arquivos').files];if(!files.length)return alertBox('importMsg','Selecione ao menos um arquivo.',true);
+ pendentes=[];const errors=[];$('processar').disabled=true;$('processar').textContent='Lendo...';
+ for(const file of files)try{pendentes.push(...await parseFile(file))}catch(e){errors.push(file.name+': '+e.message)}
+ $('processar').disabled=false;$('processar').textContent='Ler arquivos';
+ alertBox('importMsg',pendentes.length+' registro(s) para conferir. '+errors.join(' | '),!!errors.length);
+ $('importEditMsg').textContent='';preview();
+};
 $('campos').innerHTML=FIELDS.map(([k,l])=>`<label class="field">${esc(l)}<input name="${k}" ${k==='placa'?'style="text-transform:uppercase"':''} ${k==='frete'?'placeholder="CIF ou FOB"':''}></label>`).join('');$('formCarga').onsubmit=e=>{e.preventDefault();let obj=Object.fromEntries(new FormData(e.target).entries());try{add(obj,'Cadastro manual');save();e.target.reset();alert('Carregamento cadastrado!');document.querySelector('[data-tab=painel]').click()}catch(err){alert(err.message)}};
 $('filtro').innerHTML+=[...STATUSES].map((s,i)=>`<option value="${i}">${esc(s)}</option>`).join('');$('busca').oninput=render;$('filtro').onchange=render;document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('main>section').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab));render()});
 $('simularAIS').onclick=()=>{let placa=norm($('aisPlaca').value),ticket=$('aisTicket').value.trim();if(!placa||!ticket)return alertBox('aisMsg','Informe placa e ticket.',true);if(db.tickets.includes(ticket))return alertBox('aisMsg','Ticket já processado.',true);let match=db.cargas.filter(x=>norm(x.placa)===placa&&x.status===0);if(match.length!==1)return alertBox('aisMsg',`Foram encontradas ${match.length} cargas aguardando para esta placa. Verifique a programação.`,true);db.tickets.push(ticket);move(match[0].id,1,'AIS simulado — ticket '+ticket);alertBox('aisMsg','Entrada simulada com sucesso. A carga passou para Carregando.')};
