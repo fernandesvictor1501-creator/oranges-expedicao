@@ -42,7 +42,7 @@ module.exports=function(app,adminAuth,pool,ready){
     const key=String(c.id);
     if(!ids.has(key)||!eligible(c))continue;
     if(!recorded.has(key)){
-     const names=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou','Aguardando liberação PDP'];
+     const names=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou','Aguardando liberação PCP'];
      state.historico.unshift({data:stamp,placa:c.placa||'',carga:c.carga||'',antes:names[Number(c.status)]||'Pendente',depois:'Liberado',origem:'Finalização em lote de datas anteriores — Administrador'});
      recorded.add(key);
     }
