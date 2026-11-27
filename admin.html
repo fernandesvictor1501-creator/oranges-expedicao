@@ -798,7 +798,7 @@ const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,
 let filaSalvamento=Promise.resolve();function save(){render();const snapshot=JSON.stringify(db);filaSalvamento=filaSalvamento.then(async()=>{const r=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:snapshot});if(r.status===401){location.href='/login';throw Error('Sessão expirada')}if(!r.ok)throw Error('Não foi possível salvar no servidor')}).catch(e=>{console.error(e);alert('Erro ao salvar: '+e.message)})};function log(c,oldS,newS,origem){db.historico.unshift({data:now(),placa:c.placa,carga:c.carga,antes:oldS??'Novo',depois:newS,origem})};function alertBox(id,msg,error=false){$(id).innerHTML='<div class="notice '+(error?'error':'success')+'">'+esc(msg)+'</div>'};function move(id,s,origin='Operador'){
  const c=db.cargas.find(x=>x.id===id);if(!c||!Number.isInteger(s)||s<0||s>=STATUSES.length||s===6)return;
  const old=Number(c.status);
- const ordinary=Math.abs(old-s)===1&&old!==6&&s!==7;
+ const ordinary=Math.abs(old-s)===1&&s!==7&&(old!==6||s===5);
  const pdpEnter=s===7&&old>=1&&old<=4;
  const pdpExit=old===7&&(s===5||s===Number(c.pdpStatusAnterior??4));
  if(!ordinary&&!pdpEnter&&!pdpExit)return;
