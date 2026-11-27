@@ -804,6 +804,7 @@ let filaSalvamento=Promise.resolve();function save(){render();const snapshot=JSO
  if(!ordinary&&!pdpEnter&&!pdpExit)return;
  if(pdpEnter)c.pdpStatusAnterior=old;
  if(pdpExit)delete c.pdpStatusAnterior;
+ if(old===6&&s===5){c.motivoNaoCarregou='';c.dataNaoCarregou=''}
  c.status=s;c.atualizado=now();
  log(c,STATUSES[old],STATUSES[s],pdpEnter?'Ação PDP — '+origin:pdpExit&&s!==5?'Reversão PDP — '+origin:origin);save();
 }
