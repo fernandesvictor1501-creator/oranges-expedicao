@@ -2,7 +2,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 if(!$('readingView'))return;
-const ST=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou'];
+const ST=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou','Aguardando liberação PDP'];
 const icons=[
 '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="10" rx="1.8"/><path d="M15.5 9h3l3 3.5v4h-6M6 16.5v2m12-2v2"/><circle cx="7" cy="18.5" r="2"/><circle cx="18" cy="18.5" r="2"/></svg>',
 '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h8l3 9v4H3zM5 9h5M14 13h5M19 9v9h3M14 18h8M14 9l2 4"/></svg>',
@@ -12,6 +12,7 @@ const icons=[
 '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m7.5 12 3 3 6-6"/></svg>',
 '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 8 8 8m0-8-8 8"/></svg>'
 ];
+icons.push(icons[4]);
 const plannedIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg>';
 const iconTile=(icon,status)=>'<span class="oranges-icon-tile oranges-icon-'+status+'" aria-hidden="true">'+icon+'</span>';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
