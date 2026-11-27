@@ -2,7 +2,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 if(!$('readingView'))return;
-const ST=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou','Aguardando liberação PDP'];
+const ST=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou','Aguardando liberação PCP'];
 const icons=[
 '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="10" rx="1.8"/><path d="M15.5 9h3l3 3.5v4h-6M6 16.5v2m12-2v2"/><circle cx="7" cy="18.5" r="2"/><circle cx="18" cy="18.5" r="2"/></svg>',
 '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h8l3 9v4H3zM5 9h5M14 13h5M19 9v9h3M14 18h8M14 9l2 4"/></svg>',
