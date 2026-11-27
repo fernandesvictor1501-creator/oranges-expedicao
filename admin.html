@@ -808,25 +808,52 @@ function loadScript(url){return new Promise((res,rej)=>{let s=document.createEle
 async function parseFile(file){let ext=file.name.split('.').pop().toLowerCase();if(ext==='csv')return mapped(parseCSV(await file.text()));if(ext==='xml')return xmlData(await file.text());if(ext==='xlsx'||ext==='xls'){if(!window.XLSX)await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');let wb=XLSX.read(await file.arrayBuffer(),{type:'array'});return mapped(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}))}if(ext==='pdf'){if(!window.pdfjsLib)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';let doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,txt='';for(let i=1;i<=Math.min(doc.numPages,20);i++){let p=await doc.getPage(i),t=await p.getTextContent();txt+=t.items.map(x=>x.str).join(' ')+'\n'}if(!txt.trim())throw Error('PDF sem texto selecionável; é necessário OCR para PDF digitalizado');return extracted(txt)}if(ext==='png'){if(!window.Tesseract)await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');let r=await Tesseract.recognize(file,'por+eng');return extracted(r.data.text)}throw Error('Formato não suportado')}
 function preview(){if(!pendentes.length){$('revisao').classList.add('hidden');return}$('revisao').classList.remove('hidden');$('preview').innerHTML=`<table><thead><tr><th>Importar</th>${FIELDS.map(([k,l])=>`<th>${esc(l)}</th>`).join('')}</tr></thead><tbody>${pendentes.map((x,i)=>`<tr><td><input type="checkbox" class="pick" data-i="${i}" checked></td>${FIELDS.map(([k])=>`<td><input style="width:135px" data-i="${i}" data-field="${k}" value="${esc(x[k])}"></td>`).join('')}</tr>`).join('')}</tbody></table>`}
 function salvarEdicaoImportacao(){
- if(!pendentes.length){$('importEditMsg').textContent='Não há registros para editar.';return false}
- const modified=pendentes.map(x=>({...x})),errors=[],changes=new Set();
- document.querySelectorAll('#preview input[data-field]').forEach(el=>{
-  const i=Number(el.dataset.i),key=el.dataset.field;
-  if(!Number.isInteger(i)||!modified[i]||!FIELDS.some(([k])=>k===key))return;
-  const raw=String(el.value||'').trim(),value=key==='placa'?raw.toUpperCase().replace(/[^A-Z0-9]/g,''):raw;
-  if(value.length>500)errors.push('Linha '+(i+1)+': campo '+key+' muito longo');
-  if(key==='placa'&&value&&!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(value))errors.push('Linha '+(i+1)+': placa inválida');
-  if(String(modified[i][key]??'')!==value)changes.add(i);
-  modified[i][key]=value;
- });
- if(errors.length){$('importEditMsg').textContent='Revise: '+errors.slice(0,4).join(' | ');return false}
- pendentes=modified;
- $('importEditMsg').textContent=changes.size?changes.size+' registro(s) atualizado(s) na prévia. Clique em Confirmar registros válidos para gravar no sistema.':'Prévia salva. Clique em Confirmar registros válidos para gravar no sistema.';
+ const feedback=$('importEditMsg');
+ if(!pendentes.length){feedback.textContent='NÃO HÁ REGISTROS NA PRÉVIA PARA SALVAR.';return false}
+ const campos=[...document.querySelectorAll('#preview input[data-field]')];
+ const corrigidos=pendentes.map(v=>({...v}));
+ const erros=[],mudancas=new Set();
+ for(const campo of campos){
+  const i=Number(campo.dataset.i),chave=campo.dataset.field;
+  if(!Number.isInteger(i)||i<0||!corrigidos[i]||!FIELDS.some(([k])=>k===chave))continue;
+  const valorBruto=String(campo.value||'').trim();
+  const valor=chave==='placa'?valorBruto.toUpperCase().replace(/[^A-Z0-9]/g,''):valorBruto;
+  if(valor.length>500)erros.push('LINHA '+(i+1)+': CAMPO '+chave.toUpperCase()+' MUITO LONGO');
+  if(chave==='placa'&&valor&&!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(valor))erros.push('LINHA '+(i+1)+': PLACA INVÁLIDA');
+  if(String(corrigidos[i][chave]??'')!==valor)mudancas.add(i);
+  corrigidos[i][chave]=valor;
+ }
+ if(erros.length){feedback.textContent='CORRIJA OS CAMPOS: '+erros.slice(0,5).join(' | ');feedback.style.color='#d9534f';return false}
+ pendentes=corrigidos;
+ feedback.style.color='#21845a';
+ feedback.textContent=mudancas.size?mudancas.size+' REGISTRO(S) ALTERADO(S) E SALVO(S) NA PRÉVIA. CLIQUE EM CONFIRMAR PARA GRAVAR NO SISTEMA.':'PRÉVIA SALVA. CLIQUE EM CONFIRMAR REGISTROS VÁLIDOS PARA IMPORTAR.';
  return true;
 }
-$('salvarAlteracaoImportacao').onclick=salvarEdicaoImportacao;
-$('processar').onclick=async()=>{let files=[...$('arquivos').files];if(!files.length)return alertBox('importMsg','Selecione ao menos um arquivo.',true);pendentes=[];let errors=[];$('processar').disabled=true;$('processar').textContent='Lendo...';for(const file of files){try{let arr=await parseFile(file);pendentes.push(...arr)}catch(e){errors.push(file.name+': '+e.message)}}$('processar').disabled=false;$('processar').textContent='Ler arquivos';alertBox('importMsg',`${pendentes.length} registro(s) para conferir.${errors.length?' Problemas: '+errors.join(' | '):''}`,!!errors.length);preview()};
-$('confirmar').onclick=()=>{if(!salvarEdicaoImportacao())return;let selected=[...document.querySelectorAll('.pick:checked')].map(e=>pendentes[+e.dataset.i]);let ok=0,errs=[];for(let x of selected){try{add(x,'Importação de arquivo');ok++}catch(e){errs.push(e.message)}}save();pendentes=[];preview();alertBox('importMsg',`${ok} registro(s) importado(s). ${errs.length} ignorado(s): ${errs.slice(0,5).join('; ')}`,!!errs.length)};$('cancelar').onclick=()=>{pendentes=[];preview()};
+function confirmarImportacao(){
+ if(!salvarEdicaoImportacao())return;
+ const selected=[...document.querySelectorAll('#preview input.pick:checked')].map(e=>pendentes[Number(e.dataset.i)]).filter(Boolean);
+ if(!selected.length){$('importEditMsg').textContent='SELECIONE PELO MENOS UM REGISTRO PARA IMPORTAR.';return}
+ const copy=db.cargas.slice(),logCopy=db.historico.slice();
+ let count=0,errors=[];
+ for(const row of selected)try{add(row,'Importação de arquivo');count++}catch(err){errors.push(err.message)}
+ if(!count){db.cargas=copy;db.historico=logCopy;$('importEditMsg').textContent='NENHUM REGISTRO IMPORTADO: '+errors.slice(0,5).join(' | ');return}
+ save();pendentes=[];preview();
+ alertBox('importMsg',count+' REGISTRO(S) IMPORTADO(S). '+errors.length+' IGNORADO(S). '+errors.slice(0,5).join(' | '),errors.length>0);
+}
+function descartarImportacao(){
+ const count=pendentes.length;
+ if(count&&!confirm('DESCARTAR A PRÉVIA COM '+count+' REGISTRO(S)?'))return;
+ pendentes=[];preview();$('importEditMsg').textContent='PRÉVIA DESCARTADA.';
+}
+(function ligarAcoesImportacao(){
+ const saveButton=$('salvarAlteracaoImportacao'),confirmButton=$('confirmar'),discardButton=$('cancelar');
+ if(!saveButton||!confirmButton||!discardButton){console.error('Botões da importação não encontrados');return}
+ saveButton.type='button';confirmButton.type='button';discardButton.type='button';
+ saveButton.addEventListener('click',()=>{try{salvarEdicaoImportacao()}catch(e){console.error(e);$('importEditMsg').textContent='ERRO AO SALVAR ALTERAÇÃO: '+e.message}});
+ confirmButton.addEventListener('click',()=>{try{confirmarImportacao()}catch(e){console.error(e);$('importEditMsg').textContent='ERRO AO CONFIRMAR IMPORTAÇÃO: '+e.message}});
+ discardButton.addEventListener('click',()=>{try{descartarImportacao()}catch(e){console.error(e);$('importEditMsg').textContent='ERRO AO DESCARTAR PRÉVIA: '+e.message}});
+})();
+$('processar').onclick=async()=>{let files=[...$('arquivos').files];if(!files.length)return alertBox('importMsg','Selecione ao menos um arquivo.',true);pendentes=[];let errors=[];$('processar').disabled=true;$('processar').textContent='Lendo...';for(const file of files){try{let arr=await parseFile(file);pendentes.push(...arr)}catch(e){errors.push(file.name+': '+e.message)}}$('processar').disabled=false;$('processar').textContent='Ler arquivos';alertBox('importMsg',`${pendentes.length} registro(s) para conferir.${errors.length?' Problemas: '+errors.join(' | '):''}`,!!errors.length);$('importEditMsg').textContent='';preview()};
 $('campos').innerHTML=FIELDS.map(([k,l])=>`<label class="field">${esc(l)}<input name="${k}" ${k==='placa'?'style="text-transform:uppercase"':''} ${k==='frete'?'placeholder="CIF ou FOB"':''}></label>`).join('');$('formCarga').onsubmit=e=>{e.preventDefault();let obj=Object.fromEntries(new FormData(e.target).entries());try{add(obj,'Cadastro manual');save();e.target.reset();alert('Carregamento cadastrado!');document.querySelector('[data-tab=painel]').click()}catch(err){alert(err.message)}};
 $('filtro').innerHTML+=[...STATUSES].map((s,i)=>`<option value="${i}">${esc(s)}</option>`).join('');$('busca').oninput=render;$('filtro').onchange=render;document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('main>section').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab));render()});
 $('simularAIS').onclick=()=>{let placa=norm($('aisPlaca').value),ticket=$('aisTicket').value.trim();if(!placa||!ticket)return alertBox('aisMsg','Informe placa e ticket.',true);if(db.tickets.includes(ticket))return alertBox('aisMsg','Ticket já processado.',true);let match=db.cargas.filter(x=>norm(x.placa)===placa&&x.status===0);if(match.length!==1)return alertBox('aisMsg',`Foram encontradas ${match.length} cargas aguardando para esta placa. Verifique a programação.`,true);db.tickets.push(ticket);move(match[0].id,1,'AIS simulado — ticket '+ticket);alertBox('aisMsg','Entrada simulada com sucesso. A carga passou para Carregando.')};
