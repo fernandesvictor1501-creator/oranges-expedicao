@@ -653,7 +653,38 @@ html[data-oranges-theme="dark"] #readingView .rv-kpi-7{background:#482139!import
 $('filtro').innerHTML+=STATUS.map((s,i)=>'<option value="'+i+'">'+esc(s)+'</option>').join('');
 function render(){let counts=STATUS.map((_,i)=>cargas.filter(x=>x.status===i).length);$('cards').innerHTML=[['Programados',cargas.length],...STATUS.map((x,i)=>[x,counts[i]])].map(([label,n])=>'<div class="card"><span>'+esc(label.toUpperCase())+'</span><strong>'+n+'</strong></div>').join('');let q=norm($('busca').value),f=$('filtro').value;let rows=cargas.filter(x=>(f===''||String(x.status)===f)&&(!q||FIELDS.some(k=>norm(x[k]).includes(q))));$('lista').innerHTML=rows.length?'<table><thead><tr>'+['Placa','Carga','Pedido','Cliente','Produto','Quantidade','Transportadora','Motorista','Cidade','Frete','Situação','Atualizado'].map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.map(x=>'<tr>'+FIELDS.map(k=>'<td data-label="'+({placa:'Placa',carga:'Carga',pedido:'Pedido',cliente:'Cliente',produto:'Produto',quantidade:'Quantidade',transportadora:'Transportadora',motorista:'Motorista',cidade:'Cidade',frete:'Frete'}[k])+'">'+esc(x[k])+'</td>').join('')+'<td data-label="Situação"><span class="pill s'+Number(x.status||0)+'">'+esc(STATUS[x.status]||STATUS[0])+'</span></td><td data-label="Atualizado">'+esc(x.atualizado||'—')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">Nenhum carregamento ativo encontrado.</div>';}
 $('busca').oninput=render;$('filtro').onchange=render;
-async function carregar(){try{const r=await fetch('/api/public',{cache:'no-store'});if(!r.ok)throw Error('Indisponível');const dados=await r.json();cargas=Array.isArray(dados.cargas)?dados.cargas:[];window.orangesArchivedLoads=Array.isArray(dados.arquivadas)?dados.arquivadas:[];render();$('connection').textContent='● Atualizado ao vivo';$('connection').className='tag ok'}catch(e){$('connection').textContent='● Sem conexão';$('connection').className='tag off';}}
+let publicFetchBusy=false,publicAuthExpired=false;
+async function carregar(){
+ if(publicFetchBusy||publicAuthExpired)return;
+ publicFetchBusy=true;
+ try{
+  const r=await fetch('/api/public',{cache:'no-store',credentials:'same-origin'});
+  if(r.status===401||r.status===403){
+   publicAuthExpired=true;
+   const msg=r.status===401?'SESSÃO EXPIRADA — ENTRAR NOVAMENTE':'ACESSO NÃO AUTORIZADO — VERIFICAR CONTA';
+   $('connection').textContent='● '+msg;
+   $('connection').className='tag off';
+   if($('readingStamp'))$('readingStamp').textContent='É NECESSÁRIO FAZER LOGIN NOVAMENTE';
+   const banner=document.createElement('div');
+   banner.id='oranges-reauth-banner';
+   banner.setAttribute('role','alert');
+   banner.style.cssText='position:fixed;z-index:9999;left:16px;right:16px;bottom:16px;max-width:570px;margin:auto;padding:16px 20px;border:2px solid #947D6B;border-radius:14px;background:#49103D;color:white;box-shadow:0 8px 35px #0008;text-align:center;font:600 15px Arial,sans-serif';
+   banner.innerHTML='<div style="margin-bottom:11px">SUA SESSÃO DE ACESSO PRECISA SER RENOVADA.</div><a href="/acesso" style="display:inline-block;border-radius:9px;padding:10px 18px;background:#fff;color:#49103D;text-decoration:none">ENTRAR NOVAMENTE</a>';
+   if(!document.getElementById(banner.id))document.body.appendChild(banner);
+   return;
+  }
+  if(!r.ok)throw Error('HTTP '+r.status);
+  const dados=await r.json();
+  if(!Array.isArray(dados.cargas))throw Error('Resposta inválida');
+  cargas=dados.cargas;window.orangesArchivedLoads=Array.isArray(dados.arquivadas)?dados.arquivadas:[];
+  try{render()}catch(e){console.error('Falha ao desenhar painel público',e)}
+  $('connection').textContent='● Atualizado ao vivo';$('connection').className='tag ok';
+ }catch(e){
+  console.warn('Falha de sincronização do painel',e);
+  $('connection').textContent='● Falha de conexão — tentando novamente';
+  $('connection').className='tag off';
+ }finally{publicFetchBusy=false}
+}
 carregar();setInterval(carregar,3000);</script><script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}</script><nav class="public-mobile-nav" aria-label="Navegação no celular">
 <button type="button" class="active" id="mobileGoPanel"><span class="nav-ico">⌂</span>Painel</button>
 <button type="button" id="mobileGoSearch"><span class="nav-ico">⌕</span>Buscar</button>
