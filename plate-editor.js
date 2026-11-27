@@ -21,7 +21,7 @@ module.exports=function(app,adminAuth,pool,ready){
   const dateFor=c=>dateOf(c.dataProgramacao)||dateOf(c.atualizado);
   const eligible=c=>{
    const day=dateFor(c),status=Number(c.status);
-   return day&&day<localDay&&(scope==='all'||day===selectedDate)&&status>=0&&status<5;
+   return day&&day<localDay&&(scope==='all'||day===selectedDate)&&status>=0&&(status<5||status===7);
   };
   let client;
   try{
@@ -42,7 +42,7 @@ module.exports=function(app,adminAuth,pool,ready){
     const key=String(c.id);
     if(!ids.has(key)||!eligible(c))continue;
     if(!recorded.has(key)){
-     const names=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação'];
+     const names=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou','Aguardando liberação PDP'];
      state.historico.unshift({data:stamp,placa:c.placa||'',carga:c.carga||'',antes:names[Number(c.status)]||'Pendente',depois:'Liberado',origem:'Finalização em lote de datas anteriores — Administrador'});
      recorded.add(key);
     }
