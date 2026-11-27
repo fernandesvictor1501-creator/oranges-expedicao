@@ -19,6 +19,32 @@ ready=ready.then(async()=>{
   await pool.query("UPDATE app_state SET dados=$1::jsonb WHERE id=1 AND (dados->>'statusFlowVersion') IS DISTINCT FROM '2'",[JSON.stringify(changed)]);
   console.log('Etapas de carregamento atualizadas para 6 fases');
 });
+// Correção pontual autorizada: carga 114735, placa JCP0F90, exibida incorretamente como NÃO CARREGOU.
+// Somente corrige o status 6 sem motivo registrado; nunca sobrescreve um NÃO CARREGOU com motivo.
+ready=ready.then(async()=>{
+ const client=await pool.connect();
+ try{
+  await client.query('BEGIN');
+  const q=await client.query('SELECT dados FROM app_state WHERE id=1 FOR UPDATE');
+  const data=q.rows[0]?.dados;
+  if(!data){await client.query('COMMIT');return}
+  const rows=[...(Array.isArray(data.cargas)?data.cargas:[]),...(Array.isArray(data.cargasArquivadas)?data.cargasArquivadas:[])];
+  const found=rows.filter(c=>String(c.placa||'').toUpperCase().replace(/[^A-Z0-9]/g,'')==='JCP0F90'&&String(c.carga||'').trim()==='114735');
+  if(!found.length||found.some(c=>Number(c.status)!==6||String(c.motivoNaoCarregou||'').trim())){
+   await client.query('COMMIT');return;
+  }
+  const stamp=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+  for(const c of found){
+   c.status=7;c.pdpStatusAnterior=4;c.motivoNaoCarregou='';c.dataNaoCarregou='';c.atualizado=stamp;
+  }
+  data.historico=Array.isArray(data.historico)?data.historico:[];
+  data.historico.unshift({data:stamp,placa:'JCP0F90',carga:'114735',antes:'Não carregou',depois:'Aguardando liberação PCP',origem:'Correção de status solicitada pelo administrador'});
+  await client.query('UPDATE app_state SET dados=$1::jsonb WHERE id=1',[JSON.stringify(data)]);
+  await client.query('COMMIT');
+  console.log('Status PCP corrigido para JCP0F90 / 114735');
+ }catch(err){await client.query('ROLLBACK').catch(()=>{});console.error('Falha na correção pontual PCP',err.message);throw err}
+ finally{client.release()}
+});
 app.use(session({name:'oranges.sid',secret:process.env.SESSION_SECRET||crypto.randomBytes(48).toString('hex'),resave:false,saveUninitialized:false,cookie:{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',maxAge:1000*60*60*12}}));
 app.use((req,res,next)=>{res.set('Cache-Control','no-store');next()});
 const aut=(req,res,next)=>{if(req.session?.admin)return next();return res.status(401).json({error:'Não autorizado'})};const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
