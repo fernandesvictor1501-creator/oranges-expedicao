@@ -1,7 +1,7 @@
 /* Dashboard de produtividade — Oranges Alimentos. Sem alterações nos registros. */
 (function(){
   const $d=id=>document.getElementById(id);
-  const STEPS=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou','Aguardando liberação PDP'];
+  const STEPS=['Aguardando chegada','Carregando','Finalizado / Faturando','Aguardando documentação','Aguardando liberação','Liberado','Não carregou','Aguardando liberação PCP'];
   const COLORS=['#7e6d7a','#4a7fa7','#8c6ab0','#a06b88','#c7963b','#5fa36e','#b93c60','#9373b2'];
   function safe(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function parseDate(value){
