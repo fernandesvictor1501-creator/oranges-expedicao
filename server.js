@@ -19,30 +19,35 @@ ready=ready.then(async()=>{
   await pool.query("UPDATE app_state SET dados=$1::jsonb WHERE id=1 AND (dados->>'statusFlowVersion') IS DISTINCT FROM '2'",[JSON.stringify(changed)]);
   console.log('Etapas de carregamento atualizadas para 6 fases');
 });
-// Correção pontual autorizada: carga 114735, placa JCP0F90, exibida incorretamente como NÃO CARREGOU.
-// Somente corrige o status 6 sem motivo registrado; nunca sobrescreve um NÃO CARREGOU com motivo.
+// Correção pontual solicitada da carga 114735 / JCP0F90: status PCP em vez de NÃO CARREGOU.
+// A transação é idempotente e NÃO altera outras cargas ou ocorrências.
 ready=ready.then(async()=>{
  const client=await pool.connect();
- try{
+ try {
   await client.query('BEGIN');
   const q=await client.query('SELECT dados FROM app_state WHERE id=1 FOR UPDATE');
-  const data=q.rows[0]?.dados;
-  if(!data){await client.query('COMMIT');return}
-  const rows=[...(Array.isArray(data.cargas)?data.cargas:[]),...(Array.isArray(data.cargasArquivadas)?data.cargasArquivadas:[])];
-  const found=rows.filter(c=>String(c.placa||'').toUpperCase().replace(/[^A-Z0-9]/g,'')==='JCP0F90'&&String(c.carga||'').trim()==='114735');
-  if(!found.length||found.some(c=>Number(c.status)!==6||String(c.motivoNaoCarregou||'').trim())){
-   await client.query('COMMIT');return;
-  }
-  const stamp=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
-  for(const c of found){
-   c.status=7;c.pdpStatusAnterior=4;c.motivoNaoCarregou='';c.dataNaoCarregou='';c.atualizado=stamp;
-  }
-  data.historico=Array.isArray(data.historico)?data.historico:[];
-  data.historico.unshift({data:stamp,placa:'JCP0F90',carga:'114735',antes:'Não carregou',depois:'Aguardando liberação PCP',origem:'Correção de status solicitada pelo administrador'});
-  await client.query('UPDATE app_state SET dados=$1::jsonb WHERE id=1',[JSON.stringify(data)]);
+  const state=q.rows[0]?.dados;
+  if(!state){console.warn('PCP 114735: app_state ausente');await client.query('COMMIT');return}
+  const containers=[...(Array.isArray(state.cargas)?state.cargas:[]),...(Array.isArray(state.cargasArquivadas)?state.cargasArquivadas:[])];
+  const normalizePlate=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const candidates=containers.filter(c=>String(c.carga??'').trim()==='114735');
+  console.log('PCP 114735: candidatos=',candidates.map(c=>({placa:normalizePlate(c.placa),status:c.status,temMotivo:Boolean(String(c.motivoNaoCarregou||'').trim())})));
+  const matches=candidates.filter(c=>normalizePlate(c.placa)==='JCP0F90');
+  const wrong=matches.filter(c=>Number(c.status)===6);
+  if(wrong.length){
+   const stamp=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+   for(const c of wrong){
+    c.status=7;c.pdpStatusAnterior=4;
+    delete c.motivoNaoCarregou;delete c.dataNaoCarregou;
+    c.atualizado=stamp;
+   }
+   state.historico=Array.isArray(state.historico)?state.historico:[];
+   state.historico.unshift({data:stamp,placa:'JCP0F90',carga:'114735',antes:'Não carregou',depois:'Aguardando liberação PCP',origem:'Correção de situação solicitada pelo administrador'});
+   await client.query('UPDATE app_state SET dados=$1::jsonb WHERE id=1',[JSON.stringify(state)]);
+   console.log('PCP 114735: corrigido(s) '+wrong.length+' registro(s).');
+  }else console.log('PCP 114735: nenhuma carga com placa JCP0F90 e status NÃO CARREGOU.');
   await client.query('COMMIT');
-  console.log('Status PCP corrigido para JCP0F90 / 114735');
- }catch(err){await client.query('ROLLBACK').catch(()=>{});console.error('Falha na correção pontual PCP',err.message);throw err}
+ }catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('PCP 114735: erro ao corrigir',e.message);throw e}
  finally{client.release()}
 });
 app.use(session({name:'oranges.sid',secret:process.env.SESSION_SECRET||crypto.randomBytes(48).toString('hex'),resave:false,saveUninitialized:false,cookie:{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',maxAge:1000*60*60*12}}));
